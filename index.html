@@ -1245,7 +1245,7 @@ setInterval(async () => {
 				})
 			})
 			.catch(async (err) => {
-				document.querySelector('.theerror').innerHTML = err.message + `. Retrying in ${retryIn}ms.`
+				document.querySelector('.theerror').innerHTML = 'Error: ' + err.message + `. Retrying in ${retryIn}ms.`
 				console.error(err)
 				await wait(retryIn)
 				resolve(false)
@@ -1253,7 +1253,7 @@ setInterval(async () => {
 			.then(async (res) => {
 				if (!res)
 				{
-					document.querySelector('.theerror').innerHTML = `Could not connect to Sugoi-Japanese-Translator. Retrying in ${retryIn}ms.`
+					document.querySelector('.theerror').innerHTML = 'Error: Could not connect to Sugoi-Japanese-Translator. Retrying in ${retryIn}ms.`
 					await wait(retryIn)
 					resolve(false)
 					return
@@ -1262,7 +1262,7 @@ setInterval(async () => {
 					lastTranslatedTextResult = await res.json()
 				} catch (e)
 				{
-					document.querySelector('.theerror').innerHTML = `Response from Sugoi-Japanese-Translator is not valid JSON, see the browser console. Retrying in ${retryIn}ms.`
+					document.querySelector('.theerror').innerHTML = `Error: Response from Sugoi-Japanese-Translator is not valid JSON, see the browser console. Retrying in ${retryIn}ms.`
 					console.error(e)
 					await wait(retryIn)
 					resolve(false)
