@@ -1253,7 +1253,7 @@ setInterval(async () => {
 			.then(async (res) => {
 				if (!res)
 				{
-					document.querySelector('.theerror').innerHTML = 'Error: Could not connect to Sugoi-Japanese-Translator. Retrying in ${retryIn}ms.`
+					document.querySelector('.theerror').innerHTML = 'Error: Could not connect to Sugoi-Japanese-Translator. Retrying in ${retryIn}ms.''
 					await wait(retryIn)
 					resolve(false)
 					return
