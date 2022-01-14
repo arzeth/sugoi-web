@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html class="sugoi">
+<head>
+	<!--
+		@license CC0 (Public Domain)
+		@author Arzet Ro, 2022 <arzeth0@gmail.com>
+		Source code: https://github.com/arzeth/sugoi-web
+	-->
+	<meta charset="utf-8"/>
+	<title>Sugoi-Japanese-Translator's web frontend</title>
+	<style>
+		html,textarea,input,select,button {
+			/* didn't think too much about fonts */
+			font-family: 'Noto Sans JP', 'Noto Sans', 'Source Han Gothic';
+		}
+		html.ZENMODE {
+			scrollbar-width: none
+		}
+		html.ZENMODE, .ZENMODE body {
+			margin: 0;
+			padding: 0;
+		}
+		/*html.COLOR_THEME-white {
+			background: #000;
+			color: #fff;
+		}*/
+		html.COLOR_THEME-black {
+			background: #000;
+			color: #fff;
+		}
+		code {
+			font-family: 'Iosevka SS16', 'Iosevka', 'Pragmata Pro', 'PragmataPro', 'Fira Mono', monospace;
+			display: block;
+		}
+		html.firefox .chromeOnlylink {
+			display: none;
+		}
+		html.chrome .firefoxOnlylink {
+			display: none;
+		}
+		body > p { /* added by clipboard-inserter extension, but then removed by this page's script */
+			display: none;
+		}
+		html.ZENMODE .faq,
+		html.ZENMODE.HIDE_SETTINGS_IN_ZEN_MODE .sugoi__settings {
+			display: none;
+		}
+		.sugoi__source {
+			border-bottom: 2px dashed #a00;
+			border-top: 0;
+			border-left: 0;
+			border-right: 0;
+			width: 100%;
+		}
+		.sugoi__source,
+		.sugoi__log__message__source {
+			font-size: 24px;
+			padding-left: 2px;
+			padding-right: 2px;
+		}
+		.sugoi__result,
+		.sugoi__log__message__result {
+			font-size: 15px;
+			padding-left: 2px;
+			padding-right: 2px;
+		}
+		.sugoi__log {
+			margin-top: 10px;
+		}
+		.sugoi__log__message {
+			border-top: 3px solid #aaa;
+			line-height: 1.1;
+			/* padding-bottom: 14px; */
+			padding-top: 2px;
+		}
+		.sugoi__log__message + .sugoi__log__message {
+			margin-top: 16px;
+			/* padding-top: 4px; */
+		}
+		.sugoi__log__message__source {
+			font-size: 150%;
+		}
+		.sugoi__log__message__result {
+			padding-top: 2px;
+		}
+		.sugoi__log__message__result:before {
+			border-top: 2px dashed #a00;
+			content: '';
+			display: block;
+			height: 1px;;
+			margin-top: 5px;
+			width: 100%;
+		}
+		.sugoi__settings {
+			display: flex;
+			flex-direction: column;
+			width: 100%;
+			max-width: 300px;
+			/* margin-top: 15px; */
+		}
+		/* > * is not used because of performance */
+		.sugoi__settings > button,
+		.sugoi__settings > input,
+		.sugoi__settings > select,
+		.sugoi__settings > label,
+		.sugoi__settings__tip {
+			margin-top: 15px;
+		}
+		.thewarning, .theerror {
+			color: red;
+			font-weight: bold;
+		}
+	</style>
+</head>
+<body>
+<div class="theerror"></div>
+<div class="faq">
+<div class="thewarning"></div>
+<i><b>Nothing was inserted yet (textarea is in the very bottom of the page)
+<br>by clipboard-inserter extension.
+<br>When you insert, interface will change: zen mode will be activated (invisible scrollbar, no guide, etc.).
+<br>Settings are at the bottom of the page.
+</b></i>
+<br>
+<h3>How to automatically move text from CTRL+C/V to here:</h3>
+If you don't have clipboard-inserter, then get it from here:
+<br>
+<!--<div class="firefoxOnlyLink">-->
+	<a target="_blank" href="https://addons.mozilla.org/firefox/addon/clipboard-inserter/">
+		https://addons.mozilla.org/firefox/addon/clipboard-inserter/
+	</a>
+<!-- </div> -->
+<br>
+<!-- <div class="chromeOnlyLink"> -->
+	<a target="_blank" href="https://chrome.google.com/webstore/detail/clipboard-inserter/deahejllghicakhplliloeheabddjajm">
+		https://chrome.google.com/webstore/detail/clipboard-inserter/deahejllghicakhplliloeheabddjajm
+	</a>
+<!-- </div> -->
+<br>
+(github: <a target="_blank" href="https://github.com/kmltml/clipboard-inserter">
+	https://github.com/kmltml/clipboard-inserter</a>)
+<br><b>Then EVERY TIME you reload this page, MAKE SURE to click the icon (sometimes two clicks are needed), so that there was green "ON" on the icon.</b>
+<br>At least with Firefox, it seems there's some kind of leak in the above extension, so the extension's CPU usage gradually becomes high despite not doing anything.
+<br>This can be "fixed" by going to the <i>Addons</i> page (about:addons) and <i>Disable</i>&amp;<i>Enable</i> it every 1-2 thousand of CTRL+C/CTRL+V.
+<br>
+<br>
+<h3>How to automatically move text from a VN to CTRL+C/V</h3>
+Use
+<a target="_blank" href="https://github.com/Artikash/Textractor/releases">
+	https://github.com/Artikash/Textractor/releases
+</a>
+(for me it works perfectly in Wine)
+<br>Don't forget to update it sometimes to get new hooks.
+<br>
+<h3>Must-have Extension</h3>
+When you feel that a wrong word is chosen by the neural network (it will often happen because it doesn't know the full context.), you have to use:
+<br>
+<a target="_blank" href="https://chrome.google.com/webstore/detail/10ten-japanese-reader-rik/pnmaklegiibbioifkmfkgpfnmdehdfan">
+https://chrome.google.com/webstore/detail/10ten-japanese-reader-rik/pnmaklegiibbioifkmfkgpfnmdehdfan
+</a>
+<br>
+<a target="_blank" href="https://addons.mozilla.org/firefox/addon/10ten-ja-reader/">
+https://addons.mozilla.org/firefox/addon/10ten-ja-reader/
+</a>
+<br>
+(github: <a target="_blank" href="https://github.com/birchill/10ten-ja-reader">https://github.com/birchill/10ten-ja-reader</a>)
+<br>I.e. you just hover your mouse over a character, and then a character's and/or word's meanings appear in English and also in your browser's language if such dictionary exist.
+<br>If nothing happens upon hovering, click on the extension's icon (black background=enabled, grey=disabled).
+<br>On the icon there is a number "10" in case you can't find it.
+<br>It has many settings, you can even enable romaji (i.e. latin script).
+<br>If you've installed this extension just now, then refresh this page.
+<br>
+<br>It also shows tones unlike Rikaikun. In short: when there is a line above a character, then use high tone, else low tone; tone ≈ relative volume.
+<br>
+<h3>Notes</h3>
+Names in most cases are translated wrong (because there are multiple readings) or sometimes they become nouns, e.g. "Sora" might become "sky".
+<br>
+Also use
+<a target="_blank" href="https://jlptsensei.com/complete-jlpt-grammar-list/">
+	https://jlptsensei.com/complete-jlpt-grammar-list/</a> 
+(rules from all levels sorted by alphabet) when the above extension isn't enough. If you already played tens of <i>voiced</i> VNs, you would recognise >80% of them.
+<br>If you decide to learn some Japanese <i>grammar</i>, start with <a target="_blank" href="https://jlptsensei.com/jlpt-n5-grammar-list/">N5 level</a>, then N4,... (4-5 minutes to fully comprehend any rule)
+<br>The initial main motivation could be for you is that not all emotional particles can be translated into English unlike Lojban (<a target="_blank" href="https://lojban.github.io/cll/">ref. grammar</a>, <a target="_blank" href="https://vlasisku.lojban.org/cmavo">particles</a>).
+<br>Also you can use <a target="_blank" href="https://www.duolingo.com/">
+	https://www.duolingo.com/
+</a> to learn katakana, hiragana, basic grammar and vocabulary (for me Duolingo is like a game unlike e.g. Anki).
+<br>Some basic (i.e. N5) grammar and vocabulary are necessary (but still not enough though) to play e.g. twin loli gods' route in Akeiro Kaikitan where they two speak one-two syllables by turns like they have a shared mind. Without them, you won't know where the words begin and/or end.
+<br>If you're lazy and newbie, then at least pay attention only to the grammar terms on jlptsensei.com mentioned above. E.g. wa="when talking about X"=set context, ga=subject, o=<i>o</i>bject, no≈"of", <a href="https://jlptsensei.com/learn-japanese-grammar/%e3%81%a8%e3%81%84%e3%81%86%e3%81%93%e3%81%a8-to-iu-koto-meaning/">to iu koto</a>, <a target="_blank" href="https://jlptsensei.com/learn-japanese-grammar/%E3%81%9E-%E3%81%9C-zo-ze-ending-particle-meaning/">zo</a>, -te, to (quote, "and"), etc., etc., etc..
+<br>
+<br>With all of the above you are ready to sensibly consume machine translation, congratulations.
+<br>
+<br>The code in this web frontend has built-in deduplication ("[OEU][OEU" shall become "OEU]"), but very rarely the original source also has duplication on purpose (sentence "sukisuki" mistakenly would become "suki" and only then be translated).
+When the source is deduplicated, the line is dashed - - - - instead of being solid <span style="letter-spacing: -6px">————</span>&nbsp;&nbsp;.
+<br>
+<br><b>You can save this page for offline usage.</b> But don't forget to update it sometimes by visiting & Ctrl+s <a
+href="https://arzeth.github.io/sugoi-web/">https://arzeth.github.io/sugoi-web/</a>
+<h3>Links related to Sugoi-Japanese-Translator itself</h3>
+https://www.youtube.com/watch?v=r8xFzVbmo7k
+<br/>https://discord.gg/XFbWSjMHJh
+<h3>Linux</h3>
+Change
+<br/>host='0.0.0.0'
+<br/>to
+<br/>host='localhost'
+<br/>in
+<br/>backendServer/Program-Backend/Sugoi-Translator-Offline/offlineTranslation/fairseq/flaskServer.py
+<br/>(If you don't change, then you would need to specify 192.168.0.5 or something in the settings)
+<br/>
+<br/>Launch:
+<br/>wine 'Sugoi-Translator-Offline (click here).bat'
+<br/>The UI will close with "Uncaught exception" in 10-20 secs, but don't pay attention to that,
+<br/>because there's still the translation server running.
+
+If you are on Linux, then first check that the Sugoi's backend works:
+<br>
+<code>
+curl -H 'Content-Type: application/json' --data-raw '{"message":"translate sentences","content":"いかにも噂話というパターンではあったが、とにかく、多くの人が知っていた。"}' http://localhost:14366/
+</code>
+The result should be
+<code>
+"It was just a rumor, but in any case, a lot of people knew."
+</code>
+The quotes "" are because the output is a JSON string.
+<h3>Linux (misc. info)</h3>
+You can use an upscaler's early prototype (quality is better than Magpie) for most VNs:
+<br><a target="_blank" href="https://github.com/arzeth/cdmpv">https://github.com/arzeth/cdmpv</a>
+<br>A much better overengineered Linux-only universal upscaler/first-ever-upframerater will be later.
+<h3>TODO:</h3>
+When a request fails, try it again.
+
+
+<hr/>
+</div>
+
+
+<div>
+	<!--placeholder="Enter the text in 日本語"-->
+<textarea class="sugoi__source" readonly rows="4" placeholder="Nothing was pasted yet" lang="jp">
+</textarea><div class="sugoi__result" lang="en">
+</div><div class="sugoi__log"><!--
+	<div class="sugoi__log__message">
+		<div class="sugoi__log__message__source">
+			いかにも噂話というパターンではあったが、とにかく、多くの人が知っていた。
+		</div><div class="sugoi__log__message__result">
+			aoeoa aoe aolr teoalrtrl aotrlt orltrlt aoerltl aorelrt aorteao rterl tao
+		</div>
+	</div><div class="sugoi__log__message">
+		<div class="sugoi__log__message__source">
+			いかにも噂話というパターンではあったが、とにかく、多くの人が知っていた。
+		</div><div class="sugoi__log__message__result">
+			aoeoa aoe aolr teoalrtrl aotrlt orltrlt aoerltl aorelrt aorteao rterl tao
+		</div>
+	</div><div class="sugoi__log__message">
+		<div class="sugoi__log__message__source">
+			いかにも噂話というパターンではあったが、とにかく、多くの人が知っていた。
+		</div><div class="sugoi__log__message__result">
+			aoeoa aoe aolr teoalrtrl aotrlt orltrlt aoerltl aorelrt aorteao rterl tao
+		</div>
+	</div>-->
+</div>
+<form class="sugoi__settings" method="POST">
+	<button type="button" class="cleanAllLog-Button">Clean all log (size=<span class="cleanAllLog-Button__num"></span>)</button>
+	<button type="button" class="cleanAllLogExcept-Button">Clean all log except the N newest msgs, where N≥0 and N=</button>
+	<input class="cleanAllLogExcept-N" type="number" min="0" value="50" placeholder="">
+	<button type="button" class="cleanAllCache-Button">Clean multisession cache (current num of msgs: <span class="cleanAllCache-Button__num">?</span>)</button>
+	<div class="sugoi__settings__tip">
+		Queue = messages awaiting to be translated. They are translated in order, not in parallel.
+		<br>Difference between cache and log is that cache contains only unique things.
+		<br>E.g. if one heroine says "yes!", another says "no!", another says "yes!" again, then 3 records would be in log but only 2 records in cache.
+	</div>
+	<label>
+		Don't do anything if number of Japanese symbols in a single paste exceed (default=500, min=20, max=1500, <i>cur=<span data-var="DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED"></span></i>):
+		<input type="number" name="DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED" min="20" value=""/>
+	</label>
+	<label>
+		(default=2, min=0, <i>cur=<span data-var="DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE"></span></i>) (for performance reasons useful for skipping already read messages that aren't yet in cache) Drop all pending messages except the newest one unless the queue size is ≤
+		<input type="number" name="DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE" value="" min="0" placeholder=""/>
+	</label>
+	<!--<label> DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE's duplicate?
+		(default=2, min=0, <i>cur=<span data-var="DROP_MESSAGES_UNLESS_QUEUE_SIZE_IS_LTE"></span></i>) Drop messages unless the queue size is ≤
+		<input type="number" name="DROP_MESSAGES_UNLESS_QUEUE_SIZE_IS_LTE"/>
+	</label>-->
+	<label>
+		Initial min (forced) delay (in ms) after updating the text source (default=300, min=0, max=5000, <i>cur=<span data-var="MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE"></span></i>):
+		<input type="number" name="MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE" value="" min="0" placeholder=""/>
+	</label>
+	<label>
+		Use the <i>increased</i> min delay after updating the text source when the queue size is over (default=5, min=2, <i>cur=<span data-var="INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE_SHALL_BE_ACTIVATED_WHEN_QUEUE_SIZE_IS_OVER"></span></i>):
+		<input type="number" name="INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE_SHALL_BE_ACTIVATED_WHEN_QUEUE_SIZE_IS_OVER" value="" min="2" placeholder=""/>
+	</label>
+	<label>
+		What is the <i>increased</i> min delay (in ms) after updating the text source when the queue size is too big (default=1300, min=0, max=9000, <i>cur=<span data-var="INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE"></span></i>):
+		<input type="number" name="INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE" value="" min="2" placeholder=""/>
+	</label>
+	<label>
+		(default=1000, min=0, max=12500, <i>cur=<span data-var="MAX_LOG_SIZE"></span></i>) Max log size:
+		<input type="number" name="MAX_LOG_SIZE" value="" min="0" max="12500" placeholder=""/>
+	</label>
+	<label>
+		(always enabled for now, can't be disabled, default=yes, <i>cur=<span data-var="IS_LOG_MULTISESSION"></span></i>) Multisession log (in case you accidentally close your browser)
+		<input disabled checked type="checkbox" name="IS_LOG_MULTISESSION"/>
+	</label>
+	<label>
+		(default=2000, min=0, max=12500, <i>cur=<span data-var="MAX_CACHE_SIZE"></span></i>) Max cache size:
+		<input type="number" name="MAX_CACHE_SIZE" value="" min="0" max="12500" placeholder=""/>
+	</label>
+	<label>
+		(always enabled for now, can't be disabled, default=yes, <i>cur=<span data-var="IS_CACHE_MULTISESSION"></span></i>) Multisession cache (useful if you are going to restart a VN to complete another route)
+		<input disabled checked type="checkbox" name="IS_CACHE_MULTISESSION"/>
+	</label>
+	<label>
+		(default=yes, <i>cur=<span data-var="DEDUPLICATE"></span></i>) Try to deduplicate the input.
+		<input checked type="checkbox" name="DEDUPLICATE"/>
+	</label>
+	<label>
+		(default=http://localhost:14366/, <i>cur=<span data-var="BACKEND_URL"></span></i>) Sugoi's Backend URL
+		<input type="text" name="BACKEND_URL"/>
+	</label>
+	<label>
+		(default=no, <i>cur=<span data-var="SHOW_SETTINGS_IN_ZEN_MODE"></span></i>) Show these settings in zen mode
+		<input type="checkbox" name="SHOW_SETTINGS_IN_ZEN_MODE"/>
+	</label>
+	<label>
+		(<i>cur=<span data-var="COLOR_THEME"></span></i>) Color theme:
+		<select name="COLOR_THEME">
+			<option value="white">White</option>
+			<option value="black">Black</option>
+		</select>
+	</label>
+	<input type="submit" value="Save all settings"/>
+	<button type="button" class="resetSettingsButton">Reset settings, forget everything and reload this page</button>
+	<button type="button" class="getCodeForDeeplAndOthers">Copy code for use with DeepL and Google (F12 → Console) (doesn't use Sugoi at all)</button>
+</form>
+
+
+</div>
+<script id="sugoiScript">
+'use strict'
+;((window, document) => {
+if (typeof InstallTrigger !== 'undefined' || /firefox/i.test(navigator.userAgent))
+{
+	document.documentElement.classList.add('firefox')
+}
+else
+{
+	document.documentElement.classList.add('chrome')
+}
+const SUGOI = true
+let zenmodeEnabled = false
+const enableZenMode = () => {
+	if (zenmodeEnabled === false)
+	{
+		document.documentElement.scrollTo(document.documentElement.scrollLeft, 0)
+	}
+	zenmodeEnabled = true
+	document.querySelector('.faq').style.display = 'none'
+}
+
+const wait = async (ms) => {
+	return new Promise(resolve => {
+		setTimeout(() => resolve(), ms)
+	})
+}
+
+const getTextBetween = (
+	text,
+	a,
+	b,
+) => {
+	console.assert(typeof text === 'string')
+
+	const aIdx = text.indexOf(a)
+	if (aIdx !== -1)
+	{
+		text = text.slice(aIdx + a.length)
+	}
+
+	const bIdx = text.indexOf(b)
+	if (bIdx !== -1)
+	{
+		text = text.slice(0, bIdx)
+	}
+
+	return text
+}
+//const removeAllInstancesOfTextBetween = () => {}
+
+{
+	const btn = document.querySelector('.getCodeForDeeplAndOthers')
+	const btnOrigText = btn.innerHTML
+	btn.onclick = async () => {
+		const txt = getTextBetween(
+			document.getElementById('sugoiScript').innerHTML,
+			'//deeplGoogleStart\n',
+			'//deeplGoogleEnd',
+		)
+		await navigator.clipboard.writeText(
+			txt.replace(
+				getTextBetween(
+					txt,
+					'//deeplGoogle-SugoiStart\n',
+					'//deeplGoogle-SugoiEnd',
+				),
+				''
+			)
+		)
+		btn.innerHTML = 'Copied!'
+		await wait(700)
+		btn.innerHTML = btnOrigText
+	}
+}
+
+
+
+const hasOwn = Object.hasOwn || Function.prototype.call.bind(Object.prototype.hasOwnProperty);
+
+
+function storageAvailable (
+	type,
+) {
+	try {
+		const storage = window[type]
+		const x = '__storage_test__';
+		storage.setItem(x, x);
+		if (storage.getItem(x) !== x) return false; // added line
+		storage.removeItem(x);
+		return true;
+	}
+	catch (e) {
+		return false
+		/*console.error(e.code, e.name, e)
+		return e instanceof DOMException && (
+			// everything except Firefox
+			e.code === 22 ||
+			// Firefox
+			e.code === 1014 ||
+			// test name field too, because code might not be present
+			// everything except Firefox
+			e.name === 'QuotaExceededError' ||
+			// Firefox
+			e.name === 'NS_ERROR_DOM_QUOTA_REACHED') &&
+			// acknowledge QuotaExceededError only if there's something already stored
+			storage.length !== 0;
+		*/
+	}
+}
+const isLocalStorageAvailable   = /*location.protocol !== 'file:' && */storageAvailable('localStorage')
+const isSessionStorageAvailable = location.protocol !== 'file:' && storageAvailable('sessionStorage')
+const noStorage = {
+}
+if (!isSessionStorageAvailable && !isLocalStorageAvailable) document.querySelector('.thewarning').innerHTML = 'Can\'t use neither localStorage nor sessionStorage, therefore all logs and cache will be lost upon just closing this tab'
+else if (!isLocalStorageAvailable) document.querySelector('.thewarning').innerHTML = 'Can\'t use localStorage, therefore all logs and cache will be lost upon closing the browser'
+else if (location.protocol === 'file:') document.querySelector('.thewarning').innerHTML = 'Since you are running locally: if the file path changes, then all log and cache will be lost.'
+
+const availableNonRamStorages = []
+if (isLocalStorageAvailable)   availableNonRamStorages.push(localStorage)
+if (isSessionStorageAvailable) availableNonRamStorages.push(sessionStorage)
+
+const nonRamLocalStoreRemove = function nonRamLocalStoreRemove (
+	key,
+)
+{
+	availableNonRamStorages[0]?.removeItem(key)
+	//if (isLocalStorageAvailable) ret = localStorage.removeItem(key)
+	//else if (isSessionStorageAvailable) ret = sessionStorage.removeItem(key)
+}
+const localStoreGet = function localStoreGet (
+	key,
+) {
+	let ret
+	if (isLocalStorageAvailable) ret = localStorage.getItem(key)
+	else if (isSessionStorageAvailable) ret = sessionStorage.getItem(key)
+	else ret = hasOwn(noStorage, key) ? noStorage[key] : null
+	if (typeof ret !== 'string') return ret
+	if (ret.slice(0,3) === '$J$')
+	{
+		try {
+			return JSON.parse(ret.slice(3))
+		}
+		catch (e)
+		{
+			return null
+		}
+	}
+	//if (ret.slice(0,3) === '$S$') return ret.slice(3)
+	return ret
+}
+const localStoreSet = function localStoreSet (
+	key,
+	value,
+) {
+	//console.log('localStoreSet(%s, %O)', key, value)
+	if (value === void 0 || value === null)
+	{
+		console.error('^ !!!')
+		return
+	}
+	if (
+		value instanceof Object
+		||
+		// just in case
+		value?.toString() === '[object Object]'
+	)
+	{
+		value = '$J$' + JSON.stringify(value)
+	}
+	else
+	{
+		value = /*'$S$' + */(value || value === 0 ? value : '').toString()
+	}
+	if (isLocalStorageAvailable) return localStorage.setItem(key, value)
+	if (isSessionStorageAvailable) return sessionStorage.setItem(key, value)
+	const oldValue = hasOwn(noStorage, key) ? noStorage[key] : null
+	noStorage[key] = value
+	/*window.dispatchEvent(new CustomEvent('storage', {
+		key: 'a',
+		newValue: value,
+		oldValue,
+		storageArea: noStorage,
+	}))*/
+}
+const nonRamLocalStoreSet = function (...args) {
+	if (availableNonRamStorages.length) return localStoreSet(...args)
+}
+const nonRamLocalStoreGet = function (...args) {
+	if (availableNonRamStorages.length) return localStoreGet(...args)
+}
+
+// Or maybe use https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy
+// instead of the below code?
+
+const freezeTypeOfOneProp = (
+	obj,
+	key,
+	convertInputStringToNum
+) => 
+{
+	let staticVar = obj[key]
+
+	delete obj[key]
+
+	Object.defineProperty(obj, key, {
+		enumerable: true,
+		configurable: true,
+		get: () => staticVar,
+		set: (newValue) => {
+			if (
+				convertInputStringToNum
+				&&
+				typeof staticVar === 'number'
+				&&
+				typeof newValue === 'string'
+			)
+			{
+				newValue = +newValue
+			}
+			if (
+				typeof newValue === typeof staticVar
+				&&
+				!(
+					(newValue === null || staticVar === null)
+					&&
+					newValue !== staticVar
+				)
+				&&
+				!(
+					(Array.isArray(newValue) || Array.isArray(staticVar))
+					&&
+					Array.isArray(newValue) !== Array.isArray(staticVar)
+				)
+			)
+			{
+				staticVar = newValue
+			}
+			else
+			{
+				console.error(
+					'can\'t change object.%s from `%O` to `%O`',
+					key, staticVar, newValue
+				)
+			}
+		}
+	})
+}
+
+const YYY = ''//'='
+
+const freezeTypesOfExistingProps = (
+	obj,
+	convertInputStringToNum,
+) => {
+	for (const key in obj)
+	{
+		if (!hasOwn(obj, key)) continue
+
+		freezeTypeOfOneProp(obj, key, convertInputStringToNum)
+	}
+	return obj
+}
+
+const sugoiLog = document.querySelector('.sugoi__log')
+
+const possibleColorThemes = Object.freeze(
+	Array.from(document.querySelectorAll('select[name="COLOR_THEME"] option[value]'))
+	.map(x => x.getAttribute('value'))
+)
+
+const settings = {
+	DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED: 500,
+	MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE: 300,
+	// if Ctrl'ing through a VN
+	INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE: 1300,
+	INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE_SHALL_BE_ACTIVATED_WHEN_QUEUE_SIZE_IS_OVER: 5,
+	DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE: 2,
+	//DROP_MESSAGES_UNLESS_QUEUE_SIZE_IS_LTE duplicate?
+	MAX_LOG_SIZE: 500,
+	MAX_CACHE_SIZE: 1000,
+	IS_LOG_MULTISESSION: 1,
+	IS_CACHE_MULTISESSION: 1,
+	DEDUPLICATE: 1,
+	SHOW_SETTINGS_IN_ZEN_MODE: 0,
+	COLOR_THEME: 'white',
+	BACKEND_VERSION: 1, // this is used only to autoclean cache when version in localStorage/sessionStorage is smaller
+	BACKEND_URL: 'http://localhost:14366/'
+}
+freezeTypesOfExistingProps(settings, true)
+Object.preventExtensions(settings)
+window.s = settings
+
+const INVISIBLE_SETTINGS = ['BACKEND_VERSION']
+
+const sugoiSettingsForm = document.querySelector('.sugoi__settings')
+
+const fillInput = (k, v) => {
+	if (INVISIBLE_SETTINGS.includes(k)) return
+	const el = sugoiSettingsForm.querySelector('[name="' + k + '"]')
+	if (!el)
+	{
+		console.warn('????, k=%s', k)
+		return false
+	}
+	if (el.type === 'checkbox')
+	{
+		el.checked = !!v
+	}
+	else
+	{
+		el.value = v
+	}
+}
+const fillTheFormValues = () => {
+	for (const k in settings)
+	{
+		if (!hasOwn(settings, k)) continue
+		fillInput(k, settings[k])
+	}
+}
+fillTheFormValues()
+
+document.querySelector('.resetSettingsButton').onclick = () => {
+	if (confirm('Really reset the Sugoi\'s web frontend\'s settings, forget everything and reload this page?'))
+	{
+		try {localStorage.clear()} catch (e) {}
+		try {sessionStorage.clear()} catch (e) {}
+		// `noStorage` variable will be cleared by reloading the page
+
+		location.reload()
+	}
+}
+
+
+const isValidBackendUrl = (url) => {
+	return /^https?:/.test(url)
+}
+
+let lastGotFromLocalStoreThing = {[Math.random().toString()]: void 0}
+let syncSettingsLocked = false
+
+// not comparing with JSON.stringify because key order might differ after saving into localStorage (not tested)
+const areObjectShallowEqual = (obj1, obj2) =>
+  Object.keys(obj1).length === Object.keys(obj2).length &&
+  Object.keys(obj1).every(key => obj1[key] === obj2[key]);
+
+
+
+
+
+const syncSettings = () => {
+	if (syncSettingsLocked)
+	{
+		console.warn('syncSettingsLocked')
+		return
+	}
+	syncSettingsLocked = true
+	const b = localStoreGet('sugoi__settings')
+	if (b && b instanceof Object)
+	{
+		// upload or download?
+		const needAlsoToDownloadSettings = !areObjectShallowEqual(b, lastGotFromLocalStoreThing)
+		let bChanged = false
+		console.log('needAlsoToDownloadSettings')
+		if (Number.isSafeInteger(+b.BACKEND_VERSION) && +b.BACKEND_VERSION < settings.BACKEND_VERSION)
+		{
+			let cacheCleaned = false
+			for (const st of availableNonRamStorages)
+			{
+				for (const key in st)
+				{
+					if (!hasOwn(st, key)) continue
+					const oldV = key.match(/^su#(\d+)c\d/)?.[1]
+					if (!oldV) continue
+					if (parseInt(oldV, 10) < settings.BACKEND_VERSION)
+					{
+						st.removeItem(key)
+						cacheCleaned = true
+					}
+				}
+			}
+			if (cacheCleaned === true)
+			{
+				alert('Cache cleaned because Sugoi\'s backend\'s neural networks have been updated which means it can provide better translations')
+			}
+		}
+		if (needAlsoToDownloadSettings)
+		{
+			for (const key in b)
+			{
+				if (!hasOwn(b, key)) continue
+				if (!hasOwn(settings, key)) continue
+				if (key === 'BACKEND_VERSION') continue
+				if (
+					/*needAlsoToDownloadSettings && */
+					(
+						key !== 'BACKEND_URL'
+						&&
+						/^[0-9]+$/.test(b[key])
+					)
+					||
+					(
+						key === 'BACKEND_URL' && isValidBackendUrl(b[key])
+					)
+					||
+					(
+						key === 'COLOR_THEME' && possibleColorThemes.includes(b[key])
+					)
+				)
+				{
+					if (settings[key] !== b[key])
+					{
+						settings[key] = b[key]
+						fillInput(key, b[key])
+						bChanged = true
+					}
+				}
+				else
+				{
+					delete b[key]
+					bChanged = true
+				}
+			}
+		}
+		lastGotFromLocalStoreThing = {...b}// shallow clone the object
+
+		for (const key in settings)
+		{
+			if (b[key] !== settings[key])
+			{
+				b[key] = settings[key]
+				bChanged = true
+			}
+		}
+		if (bChanged) localStoreSet('sugoi__settings', b)
+	}
+	else
+	{
+		console.log('Setting all settings to defaults')
+		localStoreSet('sugoi__settings', settings)
+		lastGotFromLocalStoreThing = {...settings}
+	}
+	syncSettingsLocked = false
+}
+syncSettings()
+
+// It fires only when *other* tab has updated localStorage or sessionStorage
+// But it doesn't fire
+// if (updated storage === sessionStorage && location.protocol === 'file:')
+// even if the URL is the same because sessionStorage
+// is no different than a local variable for file:// (at least on Firefox).
+// And `noStorage` variable doesn't matter at all.
+/*window.addEventListener('storage', (e) => {
+	if (e.key === 'sugoi__settings')
+	{
+		syncSettings()
+	}
+})*/
+// commented because who in world would use this page in multiple tabs?
+
+
+sugoiSettingsForm.onsubmit = function (e) {
+	e.preventDefault()
+	;(async () => {
+		if (syncSettingsLocked)
+		{
+			while (syncSettingsLocked) await wait(300)
+		}
+		syncSettingsLocked = true
+		console.log(Array.from(new FormData(sugoiSettingsForm)))
+		const newSettingsIncomingFromTheForm = {
+			//...settings,
+			...Object.fromEntries(
+				Array.from(new FormData(sugoiSettingsForm))
+				.filter(([k,v]) => {
+					const el = sugoiSettingsForm.querySelector('[name="' + k +  '"]')
+					if (!el)
+					{
+						console.warn('????')
+						return false
+					}
+					const fail = () => {
+						alert('input has bad value, check min&max limits');
+						el.focus();
+					}
+					if (el.type === 'number')
+					{
+						if (!/^[0-9]+$/.test(v))
+						{
+							el.focus()
+							return false
+						}
+						v = +v
+						if (el.hasAttribute('min') && v < el.getAttribute('min')) {fail();return false}
+						if (el.hasAttribute('max') && v > el.getAttribute('max')) {fail();return false}
+					}
+					else if (el.type === 'text')
+					{
+						if (k === 'BACKEND_URL')
+						{
+							if (!isValidBackendUrl(v))
+							{
+								fail()
+								return false
+							}
+						}
+						else
+						{
+							console.warn('FIXME: add check')
+							return true
+						}
+					}
+					else if (el.type === 'checkbox') return true
+					else if (el.tagName === 'SELECT')
+					{
+						if (k === 'COLOR_THEME')
+						{
+							return true
+						}
+						else
+						{
+							console.error('unknown select! %O', el)
+						}
+					}
+					else console.error('bad type! %O', el)
+					return true
+				})
+				.map(x => {
+					//console.log(x)
+					if (x[1] === 'on') return [x[0], 1]
+					return x
+					//if (x[1] === 'off') return [x[0], false]
+				})
+			)
+		}
+		console.log('newSettingsIncomingFromTheForm=%O', JSON.parse(JSON.stringify(newSettingsIncomingFromTheForm)))
+		for (const prop in settings)
+		{
+			if (!hasOwn(settings, prop)) continue
+			if (prop === 'NIGHT_MODE')
+			{
+				console.warn(JSON.parse(JSON.stringify(newSettingsIncomingFromTheForm)))
+			}
+			if (!hasOwn(newSettingsIncomingFromTheForm, prop) && !INVISIBLE_SETTINGS.includes(prop))
+			{
+				if (prop === 'IS_LOG_MULTISESSION' || prop === 'IS_CACHE_MULTISESSION') continue // they are disabled
+				console.log('prop %O to 0', prop)
+				newSettingsIncomingFromTheForm[prop] = 0 // unchecked checkbox
+			}
+			settings[prop] = newSettingsIncomingFromTheForm[prop]
+		}
+		lastGotFromLocalStoreThing = newSettingsIncomingFromTheForm
+		localStoreSet('sugoi__settings', newSettingsIncomingFromTheForm)
+		syncSettingsLocked = false
+		syncSettings()
+	})()
+	return false
+}
+
+
+
+
+/*const getDbKeyPrefix = (type) => {
+	console.assert(type === 'c' || type === 'l')
+	return 'su#' + settings.BACKEND_VERSION + type
+}
+const getDbCacheKeyPrefix = () => getDbKeyPrefix('c')
+const getDbLogKeyPrefix   = () => getDbKeyPrefix('l')*/
+const dbCacheKeyPrefix = 'su#' + settings.BACKEND_VERSION + 'c'
+const dbLogKeyPrefix   = 'su#' + settings.BACKEND_VERSION + 'l'
+const getDbKeyPrefix = (type) => type === 'c' ? dbCacheKeyPrefix : dbLogKeyPrefix
+const dbCacheKeyPrefixPlusDateLength = (dbCacheKeyPrefix + Date.now() + YYY).length
+const dbLogKeyPrefixPlusDateLength   = (dbLogKeyPrefix   + Date.now()).length
+
+const __getRecordsCountInNonRamDb = (type) => {
+	console.assert(type === 'c' || type === 'l')
+	if (availableNonRamStorages.length === 0) return 0
+
+	const p = getDbKeyPrefix(type)
+	return Object.keys(availableNonRamStorages[0])
+	.filter(x => x.startsWith(p))
+	.length
+
+	/*
+	let ret = 0
+	const re = new RegExp('^' + getDbKeyPrefix(type) + 
+	for (const key in availableNonRamStorages[0])
+	{
+		if (re.test(key))
+		{
+			ret++
+		}
+	}
+	return ret*/
+}
+const getRecordsCountInNonRamCache = () => __getRecordsCountInNonRamDb('c')
+const getRecordsCountInNonRamLog   = () => __getRecordsCountInNonRamDb('l')
+
+const recountCacheKeys = () => getRecordsCountInNonRamCache()
+const recountLogKeys   = () => getRecordsCountInNonRamLog()
+
+const getSortedKeysFromNonRamDb = (type) => {
+	const dbKeyPrefix = type === 'c' ? dbCacheKeyPrefix : dbLogKeyPrefix
+	if (availableNonRamStorages.length === 0) return []
+	const ret = Object.keys(availableNonRamStorages[0])
+	.filter(x => x.startsWith(dbKeyPrefix))
+	.sort((a, b) => {
+		a = parseInt(a.slice(dbKeyPrefix.length), 10)
+		b = parseInt(b.slice(dbKeyPrefix.length), 10)
+		if (a < b) return -1
+		if (a > b) return 1
+		return 0
+	})
+	document.querySelector(
+		type === 'c'
+		? '.cleanAllCache-Button__num'
+		: '.cleanAllLog-Button__num'
+	).innerHTML = ret.length + '±1'
+	return ret
+}
+const getSortedCacheKeysFromNonRam = () => getSortedKeysFromNonRamDb('c')
+const getSortedLogKeysFromNonRam   = () => getSortedKeysFromNonRamDb('l')
+
+// @returns full keys of the removed records
+const removeEarliestRecordsInNonRamCache = (type, n) => {
+	console.assert(type === 'c' || type === 'l')
+	console.assert(typeof n === 'number')
+	const ret = []
+	for (const key of getSortedKeysFromNonRamDb(type).slice(0, n))
+	{
+		nonRamLocalStoreRemove(key)
+		ret.push(key)
+	}
+	return ret
+}
+document.querySelector('.cleanAllCache-Button').onclick = () => {
+	removeEarliestRecordsInNonRamCache('c', Infinity)
+	recountCacheKeys()
+}
+
+
+
+// __chch can be supplied for microoptimization, see the `else` branch
+const removeTheEarilestLogMessages = (howMany, __chch) => {
+	if (howMany <= 0) return
+	console.log('removeTheEarilestLogMessages(%O)', howMany)
+	if (availableNonRamStorages.length)
+	{
+		const fullDbKeys = removeEarliestRecordsInNonRamCache('l', howMany)
+		howMany = Math.min(howMany, fullDbKeys.length)
+		for (let i = 0; i < howMany; i++)
+		{
+			const el = sugoiLog.querySelector(
+				'[data-id="'
+				+ fullDbKeys[i]//.slice(0, dbLogKeyPrefixPlusDateLength)
+				+ '"]'
+			)
+			console.log('[data-id="'
+				+ fullDbKeys[i]//.slice(0, dbLogKeyPrefixPlusDateLength)
+				+ '"]', el)
+			if (el) sugoiLog.removeChild(el)
+		}
+	}
+	else
+	{
+		const ch = Array.from(__chch || sugoiLog.children).reverse()
+		howMany = Math.min(howMany, ch.length) // yes, this line is not present inside removeEarliestRecordsInNonRamCache
+		for (let i = 0; i < howMany; i++)
+		{
+			sugoiLog.removeChild(ch[i])
+		}
+	}
+	recountLogKeys()
+}
+document.querySelector('.cleanAllLog-Button').onclick = () => {
+	removeTheEarilestLogMessages(Infinity)
+}
+document.querySelector('.cleanAllLogExcept-Button').onclick = () => {
+	const n = parseInt(document.querySelector('.cleanAllLogExcept-N').value, 10)
+	if (!Number.isSafeInteger(n))
+	{
+		alert('not a number, got ' + n)
+		return
+	}
+	if (n < 0)
+	{
+		alert('should be ≥0, got ' + n)
+		return
+	}
+	const ch = sugoiLog.children
+	removeTheEarilestLogMessages(ch.length - n)
+}
+
+
+
+
+
+
+
+// TODO: don't use setInterval
+setInterval(() => {
+	{
+		const ch = sugoiLog.children
+		if (ch.length > settings.MAX_LOG_SIZE)
+		{
+			removeTheEarilestLogMessages(ch.length - settings.MAX_LOG_SIZE, ch)
+		}
+	}
+
+	for (const theme of possibleColorThemes)
+	{
+		if (theme === settings.COLOR_THEME)
+		{
+			document.documentElement.classList.add('COLOR_THEME-' + theme)
+		}
+		else
+		{
+			document.documentElement.classList.remove('COLOR_THEME-' + theme)
+		}
+	}
+	document.documentElement.classList[
+		settings.SHOW_SETTINGS_IN_ZEN_MODE === 1
+		? 'add'
+		: 'remove'
+	]('SHOW_SETTINGS_IN_ZEN_MODE')
+	document.documentElement.classList[
+		settings.SHOW_SETTINGS_IN_ZEN_MODE === 1
+		? 'remove'
+		: 'add'
+	]('HIDE_SETTINGS_IN_ZEN_MODE')
+	//document.documentElement.setAttribute('data-night-mode', settings.NIGHT_MODE === 1 ? '1' : '0')
+	document.querySelectorAll('span[data-var]').forEach(x => {
+		const varName = x.getAttribute('data-var')
+		if (!hasOwn(settings, varName))
+		{
+			console.warn('data-var=`%s` is bad, see the `settings` variable', varName)
+			return
+		}
+		x.innerHTML = (
+			x.parentNode.parentNode.querySelector('[type="checkbox"]')
+			? (+settings[varName] ? 'yes' : 'no')
+			: settings[varName]
+		)
+	})
+}, 500)
+
+
+const addLogMessageToDom = (
+	sourceId,
+	sourceTxt,
+	resultTxt,
+) => {
+	console.assert(typeof sourceId === 'string')
+	console.assert(typeof sourceTxt === 'string')
+	console.assert(typeof resultTxt === 'string')
+	const newLogMsg = document.createElement('DIV')
+	newLogMsg.className = 'sugoi__log__message'
+	newLogMsg.dataset.id = sourceId
+	{
+		const newLogMsgSource = document.createElement('DIV')
+		newLogMsgSource.className = 'sugoi__log__message__source'
+		newLogMsgSource.setAttribute('lang', 'jp')
+		newLogMsgSource.innerHTML = sourceTxt
+		newLogMsg.appendChild(newLogMsgSource)
+	}
+	{
+		const newLogMsgResult = document.createElement('DIV')
+		newLogMsgResult.className = 'sugoi__log__message__result'
+		newLogMsgResult.setAttribute('lang', 'en')
+		newLogMsgResult.innerHTML = resultTxt
+		newLogMsg.appendChild(newLogMsgResult)
+	}
+	sugoiLog.prepend(newLogMsg)
+}
+
+getSortedLogKeysFromNonRam().forEach(key => {
+	addLogMessageToDom(
+		key,
+		...nonRamLocalStoreGet(key)
+	)
+})
+
+window.addEventListener('DOMContentLoaded', () => {
+	document.querySelector('.sugoi__source').value = '' // Firefox after F5 doesn't empty inputs, etc.
+})
+
+
+
+// This works for the Sugoi's Web Frontend
+// But also works with deepl.com/translator, translate.google.com, although you need to paste ALL of the below code into F12→Console (or just Ctrl+Shift+k on Firefox).
+//deeplGoogleStart
+;(() => {
+'use strict'
+if (window.mutObserver)
+{
+	console.error('you\'ve already pasted the code. If you wanted to update the code, then refresh the page first.');
+	return
+}
+
+
+let lastTimeQueued = 0
+const queue = []
+let elToBeUsed
+const enqueue = (text, el) => {
+	elToBeUsed = el
+	const curT = Date.now()
+	if (curT < lastTimeQueued) lastTimeQueued = 0 // time sometimes go backwards because of timesync
+	queue.push(text)
+	lastTimeQueued = curT
+}
+// About `cacheInRam`: either it is empty (MAX_CACHE_SIZE=0) or always contains everything (MAX_CACHE_SIZE>0)
+const cacheInRam = new Map()
+let locked = false
+const wait = async (ms) => {
+	return new Promise(resolve => {
+		setTimeout(() => resolve(), ms)
+	})
+}
+let lastTranslatedTextSource = ''
+let lastTranslatedTextResult = ''
+
+if (typeof settings === 'undefined') // that means it's deepl or google translate
+{
+	window.settings = {
+		DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED: 500,
+		MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE: 300,
+		// if Ctrl'ing through a VN
+		INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE: 1300,
+		INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE_SHALL_BE_ACTIVATED_WHEN_QUEUE_SIZE_IS_OVER: 5,
+		DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE: 2,
+		DEDUPLICATE: 1,
+	}
+}
+
+setInterval(async () => {
+	if (locked === true) return
+	locked = true
+	if (queue.length >= settings.INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE_SHALL_BE_ACTIVATED_WHEN_QUEUE_SIZE_IS_OVER)
+	{
+		await wait(
+			settings.INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE
+			-
+			settings.MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE
+		)
+	}
+	// .splice(0) empties an array but returns what was there
+	const textSource = (
+		queue.length <= settings.DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE
+		? queue.splice(Math.max(0, queue.length - settings.DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE + 1)).slice(-1)[0]
+		: queue.splice(0).slice(-1)[0]
+	)
+	if (!textSource)
+	{
+		locked = false
+		return
+	}
+
+	if (typeof SUGOI !== 'undefined')
+	{
+		//deeplGoogle-SugoiStart
+		if (settings.MAX_LOG_SIZE !== 0 && lastTranslatedTextSource)
+		{
+			addLogMessageToDom(
+				getSortedLogKeysFromNonRam()
+				.slice(-1)[0]
+				.slice(0, dbLogKeyPrefixPlusDateLength),
+				lastTranslatedTextSource,
+				lastTranslatedTextResult,
+			)
+		}
+		document.querySelector('.sugoi__source').value = textSource
+		if (settings.MAX_CACHE_SIZE !== 0)
+		{
+			if (cacheInRam.has(textSource))
+			{
+				lastTranslatedTextSource = textSource
+				document.querySelector('.sugoi__result').innerHTML = lastTranslatedTextResult = cacheInRam.get(textSource)
+				locked = false
+				return
+			}
+			if (availableNonRamStorages.length)
+			{
+				const keys = getSortedCacheKeysFromNonRam()
+				for (let i = 0; i < keys.length; i++)
+				{
+					//console.log('cmp `%s` vs `%s`, fullkey=%s', keys[i].slice(dbCacheKeyPrefixPlusDateLength), textSource, keys[i])
+					if (keys[i].slice(dbCacheKeyPrefixPlusDateLength) === textSource)
+					{
+						lastTranslatedTextSource = textSource
+						document.querySelector('.sugoi__result').innerHTML = lastTranslatedTextResult = localStoreGet(keys[i])
+						locked = false
+						//alert('used cache')
+						return
+					}
+				}
+			}
+		}
+		document.querySelector('.sugoi__result').innerHTML = '... ... ... ... ... ...'
+		const retryIn = 1000
+		for (;;)
+		{
+			if (await new Promise(resolve => fetch(settings.BACKEND_URL, {
+				method: 'POST',
+				headers: {'Content-Type': 'application/json'},
+				body: JSON.stringify({
+					message: 'translate sentences',
+					content: textSource
+				})
+			})
+			.catch(async (err) => {
+				document.querySelector('.theerror').innerHTML = err.message + `. Retrying in ${retryIn}ms.`
+				console.error(err)
+				await wait(retryIn)
+				resolve(false)
+			})
+			.then(async (res) => {
+				if (!res)
+				{
+					document.querySelector('.theerror').innerHTML = `Could not connect to Sugoi-Japanese-Translator. Retrying in ${retryIn}ms.`
+					await wait(retryIn)
+					resolve(false)
+					return
+				}
+				try {
+					lastTranslatedTextResult = await res.json()
+				} catch (e)
+				{
+					document.querySelector('.theerror').innerHTML = `Response from Sugoi-Japanese-Translator is not valid JSON, see the browser console. Retrying in ${retryIn}ms.`
+					console.error(e)
+					await wait(retryIn)
+					resolve(false)
+					return
+				}
+				document.querySelector('.theerror').innerHTML = ''
+				lastTranslatedTextSource = textSource
+				if (settings.MAX_CACHE_SIZE !== 0)
+				{
+					if (getRecordsCountInNonRamCache() === settings.MAX_CACHE_SIZE)
+					{
+						removeEarliestRecordsInNonRamCache('c', 1)
+					}
+					const t = Date.now()
+					nonRamLocalStoreSet(
+						dbCacheKeyPrefix + t + YYY
+						+ textSource,
+						lastTranslatedTextResult
+					)
+					nonRamLocalStoreSet(
+						dbLogKeyPrefix + t,
+						[textSource, lastTranslatedTextResult]
+					)
+
+					// also store everything in RAM
+					// because localStorage has limit of 5MB per domain.
+					cacheInRam.set(textSource, lastTranslatedTextResult)
+				}
+				document.querySelector('.sugoi__result').innerHTML = lastTranslatedTextResult
+				resolve(true)
+			})))
+			{
+				locked = false
+				break
+			}
+		}
+		//deeplGoogle-SugoiEnd
+	}
+	else
+	{
+		// most of the commented lines below in this block are failed attempts to make it work with Papago
+		const pqp = {
+			/*view: window,
+			bubbles: true,
+			cancelable: true,
+			buttons: 1,
+			key: '\n',
+			clipboardData: text,
+			value: text,
+			data: text,
+			newValue: text,*/
+		}
+		elToBeUsed.dispatchEvent(new MouseEvent('click', pqp))// FIXME: is this necessary?
+		elToBeUsed.focus()// FIXME: is this necessary?
+		elToBeUsed.value = textSource
+		// DeepL.com/translator watches for `keyup`.
+		// Changing .value doesn't generate any events.
+		//document.querySelector('#sourceEditArea')?.dispatchEvent(new KeyboardEvent('keydown',pqp))
+		//tt.dispatchEvent(new KeyboardEvent('keydown',pqp));
+		//document.querySelector('#sourceEditArea')?.dispatchEvent(new KeyboardEvent('keypress',pqp))
+		//tt.dispatchEvent(new KeyboardEvent('keypress',pqp));
+		document.querySelector('#sourceEditArea, .lmt__source_textarea')?.dispatchEvent(new KeyboardEvent('keyup',pqp))
+		/*
+		//tt.focus()
+		//tt.dispatchEvent(new KeyboardEvent('keyup',pqp));
+		//tt.dispatchEvent(new KeyboardEvent('input',pqp));
+		tt.dispatchEvent(new KeyboardEvent('change',pqp))
+		//tt.dispatchEvent(new KeyboardEvent('paste',pqp))
+	//
+		//tt.dispatchEvent(new KeyboardEvent('onKeyup',pqp));
+		tt.dispatchEvent(new InputEvent('input',pqp));
+		//tt.dispatchEvent(new KeyboardEvent('onChange',pqp))
+		//tt.dispatchEvent(new KeyboardEvent('onPaste',pqp))
+
+		//tt.dispatchEvent(new Event('paste',pqp))
+		//tt.dispatchEvent(new Event('onPaste',pqp))
+		tt.d ispatchEvent(new InputEvent('change',pqp))
+		tt.dispatchEvent(new InputEvent('onChange',pqp))
+
+		tt.dispatchEvent(new Event('submit',pqp))
+		tt.dispatchEvent(new KeyboardEvent('submit',pqp))
+		setTimeout(() => {
+			document.querySelector('#btnTranslate')?.click()
+		}, 70)
+		*/
+		locked = false
+	}
+}, settings.MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE)
+
+/*const enqueueTheSendingToSugoi = (text) => {
+	if (text)
+}*/
+
+
+window.mutObserver = new MutationObserver(function (mutations) { mutations.forEach((mutation) => {
+	//console.log('step1')
+	if (!(
+		mutation.target === document.body &&
+		mutation.type === 'childList' &&
+		mutation.addedNodes.length
+	)) {
+		return
+	}
+	//console.log('step2')
+
+	// .reverse().find() is kind of like if .lastFind existed
+	const tempPTag = Array.from(mutation.addedNodes).reverse().find(x => x.tagName === 'P')
+	if (!tempPTag) return
+	//console.log('step3')
+
+	let text = tempPTag.textContent.trim()
+	tempPTag.remove() // the tag created by clipboard-inserter extension has served its purpose
+	if (/http|const\s|ffmpeg|#include|#define/i.test(text)) return
+	//console.log('step4')
+
+
+	if (!/[一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]/u.test(text)) return//[ａ-ｚＡ-Ｚ０-９]+|
+	// ^ why multiple []?
+	if (/![♪_\\\/<>\u2003-\u2005´*•‧‣%§†‡‰#№¡!！՜¿?？⁈⁉՞;；:：׃⁏'‘‚׳`‛’"״「」「」『』﹁﹂““””„‟（）()【】［］\[\]《》{}｛　｝﹏,，֊.।。‖։~〜…‥«»\-]$/.test(text))
+	{
+		text += '。'
+	}
+	text = text.replace(/([」」])/g, '$1\n')
+	text = text.replace(/(.+(?:」|。|？|)(?:\s|\n)*)(「)/m, '$2')
+	text = text.replace(/(?:\r?\n){2,}/gm, '\n')
+	text = text.trim()
+
+	const onlyJapSymbols = text.replace(/[a-zа-яёĭŭñѫѧѣąǫęųįäöëüïŕřþðə°µ+!@#$%^&*¹²³⁴⁵⁶⁷⁸⁹⁰♪_\\\/0-9\s<>\u2003-\u2005´*•‧‣%§†‡‰#№¡!！՜¿?？⁈⁉՞;；:：׃⁏'‘‚׳`‛’"״「」「」『』﹁﹂““””„‟（）()【】［］\[\]《》{}｛　｝﹏,，֊.।。‖։~〜…‥«»\-]+/ig, '')
+	if (/セーブ画面へ移動します|ゲームを終了します/.test(onlyJapSymbols)) return // buttons' tooltips
+	if (onlyJapSymbols.replace(/は|い|え/g, '').length <= 0)//<= 1
+	{
+		return
+	}
+	//console.log('step5')
+	if (onlyJapSymbols.length > settings.DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED) return
+	//console.log('step6')
+	if (settings.DEDUPLICATE)
+	{
+		window.preJText = onlyJapSymbols
+		/*window.preJTextA = onlyJapSymbols.slice(0, Math.ceil(onlyJapSymbols.length / 2))
+		window.preJTextB = onlyJapSymbols.slice(Math.ceil(onlyJapSymbols.length / 2))
+		window.preJTextA2 = onlyJapSymbols.slice(0, Math.floor(onlyJapSymbols.length / 2))
+		window.preJTextB2 = onlyJapSymbols.slice(Math.floor(onlyJapSymbols.length / 2))
+		window.preText = text*/
+		if (text.includes('「「') || text.includes('\n（（')) text = text.split('\n')[0]
+		else if (text.includes('　（（')) text = text.slice(0, text.indexOf('　（（'))
+		else if (text.includes('　「「')) text = text.slice(0, text.indexOf('　「「'))
+		else if (text.includes('」\n「')) text = text.slice(0, text.indexOf('」\n「'))
+		else
+		{
+			if (
+				onlyJapSymbols.slice(0, Math.ceil(onlyJapSymbols.length / 2))
+				===
+				onlyJapSymbols.slice(Math.ceil(onlyJapSymbols.length / 2))
+			)
+			{
+				text = onlyJapSymbols.slice(Math.floor(onlyJapSymbols.length / 2))
+			}
+			else if (
+				onlyJapSymbols.slice(0, Math.floor(onlyJapSymbols.length / 2))
+				===
+				onlyJapSymbols.slice(Math.floor(onlyJapSymbols.length / 2))
+			)
+			{
+				text = onlyJapSymbols.slice(Math.floor(onlyJapSymbols.length / 2))
+			}
+		}
+
+		/*if (
+			text.slice(2, Math.floor(text.length / 2)).replace()
+			===
+			text.slice(2 + Math.floor(text.length / 2))
+		)
+		{
+			text = text.slice(2 + Math.floor(text.length / 2))
+		}
+		else if (
+			text.slice(2, Math.ceil(text.length / 2))
+			===
+			text.slice(2 + Math.ceil(text.length / 2))
+		)
+		{
+			text = text.slice(2 + Math.ceil(text.length / 2))
+		}*/
+	}
+	if (typeof enableZenMode === 'function') enableZenMode()
+	document.documentElement.classList.add('ZENMODE')
+	window.lastText = text
+	
+	const tt = document.querySelector('.lmt__source_textarea, textarea[aria-label="Source text"], textarea[aria-label="Text source"], textarea[aria-label="Testo di origine"], textarea[role="combobox"], #txtSource')
+	if (tt)
+	{
+		enqueue(text, tt)
+	}
+	else // sugoi
+	{
+		enqueue(text)
+	}
+	//tt.focus()
+
+
+
+}) })
+window.mutObserver.observe(document.body, {
+	childList: true, attributes: false
+})
+if (typeof SUGOI === 'undefined') document.querySelector('html').style.scrollbarWidth = 'none'
+if (document.querySelector('#dl_translator'))
+{
+	document.querySelector('.lmt--web').style.paddingTop = '0'
+	document.querySelector('#dl_translator').style.paddingLeft = '0'
+	document.querySelector('#dl_translator').style.paddingRight = '0'
+	document.querySelector('header.dl_header').parentNode.removeChild(document.querySelector('header.dl_header'))
+
+	Array.from(document.querySelectorAll('.lmt__textarea_container'))
+	.forEach(x => {
+		x.setAttribute('style', 'min-height: 0 !important;padding: 5px !important')
+	})
+	Array.from(document.querySelectorAll('.lmt__textarea'))
+	.forEach(x => {
+		x.setAttribute('style', 'min-height: 0 !important')
+		x.setAttribute('rows', '6')
+	})
+	setInterval(() => {
+	Array.from(document.querySelectorAll('.lmt__side_container--source textarea.lmt__textarea'))
+	.forEach(x => {
+		x.style.position = 'static'
+		/*x.setAttribute(
+			'style',
+			(x.getAttribute('style') || '') + ';position: static !important;'
+		)*/
+	})
+	}, 2000)
+	Array.from(document.querySelectorAll('textarea.lmt__textarea'))
+	.forEach(x => {
+		x.setAttribute('style', 'min-height: 0 !important;line-height:1;font-size: 14px !important')
+		x.setAttribute('rows', '6')
+	})
+	Array.from(document.querySelectorAll('#source-dummydiv'))
+	.forEach(x => {
+		x.style.lineHeight = '1.2'
+	})
+
+	Array.from(document.querySelectorAll('.lmt__textarea_separator'))
+	.forEach(x => x.setAttribute('style', 'margin-top: 0 !important; margin: 0 important;'))
+	Array.from(document.querySelectorAll('.lmt__language_container, .lmt__source_toolbar, .lmt__target_toolbar, .lmt__docTrans-tab-container, #dl_quotes_container, .dl_footer, .lmt__dict__empty_state, .eSEOtericText, #source-dummydiv'))
+	.forEach(x => x.setAttribute('style', 'display: none;'))
+	document.querySelector('.lmt__sides_container').style.flexDirection = 'column'
+	Array.from(document.querySelectorAll('.lmt__side_container')).forEach(x => x.style.width = '100vw')
+}
+if (document.querySelector('#txtSource'))
+{
+	document.querySelector('header').style.display = 'none'
+	document.querySelector('footer').style.display = 'none'
+}
+
+})()
+//deeplGoogleEnd
+
+
+// -------
+// end of the script that can also be copy-pasted to deepl.com or google translate
+// -------
+
+
+
+
+})(window, document)
+</script>
+</body>
+</html>
