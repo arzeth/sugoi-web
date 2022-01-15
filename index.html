@@ -195,16 +195,16 @@ Also use
 <br><b>You can save this page for offline usage.</b> But don't forget to update it sometimes by visiting & Ctrl+s <a
 href="https://arzeth.github.io/sugoi-web/">https://arzeth.github.io/sugoi-web/</a>
 <h3>Links related to Sugoi-Japanese-Translator itself</h3>
-https://www.youtube.com/watch?v=r8xFzVbmo7k
-<br/>https://discord.gg/XFbWSjMHJh
-<h3>Linux</h3>
-Change
+<a href="https://www.youtube.com/watch?v=r8xFzVbmo7k">https://www.youtube.com/watch?v=r8xFzVbmo7k</a>
+<br/><a href="https://discord.gg/XFbWSjMHJh">https://discord.gg/XFbWSjMHJh</a>
+<h3>Linux (the easiest way: with Wine)</h3>
+Just in case change
 <br/>host='0.0.0.0'
 <br/>to
 <br/>host='localhost'
 <br/>in
 <br/>backendServer/Program-Backend/Sugoi-Translator-Offline/offlineTranslation/fairseq/flaskServer.py
-<br/>(If you don't change, then you would need to specify 192.168.0.5 or something in the settings)
+<br/>(If you don't change, then you would likely need to specify 192.168.0.5 or something in the settings)
 <br/>
 <br/>Launch:
 <br/>wine 'Sugoi-Translator-Offline (click here).bat'
@@ -221,10 +221,12 @@ The result should be
 "It was just a rumor, but in any case, a lot of people knew."
 </code>
 The quotes "" are because the output is a JSON string.
+<h3>Linux (without Wine)</h3>
+<a href="https://git.sr.ht/~asdf/sugee">https://git.sr.ht/~asdf/sugee</a>
 <h3>Linux (misc. info)</h3>
-You can use an upscaler's early prototype (quality is better than Magpie) for most VNs:
+You can use this upscaler (quality is better than Magpie) for most VNs:
 <br><a target="_blank" href="https://github.com/arzeth/cdmpv">https://github.com/arzeth/cdmpv</a>
-<br>A much better overengineered Linux-only universal upscaler/first-ever-upframerater will be later.
+<br>A much better overengineered Linux-only universal upscaler/first-ever-universal-upframerater will be later.
 
 
 <hr/>
