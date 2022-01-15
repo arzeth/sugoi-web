@@ -1237,7 +1237,7 @@ setInterval(async () => {
 			if (await new Promise(resolve => fetch(settings.BACKEND_URL, {
 				method: 'POST',
 				headers: {'Content-Type': 'application/json'},
-				body: JSON.stringify({
+				body: settings.BACKEND_URL.includes('/translate') ? textSource : JSON.stringify({
 					message: 'translate sentences',
 					content: textSource
 				})
@@ -1257,7 +1257,7 @@ setInterval(async () => {
 					return
 				}
 				try {
-					lastTranslatedTextResult = await res.json()
+					lastTranslatedTextResult = (await res.json()).trim() // it sends us a JSON string
 				} catch (e)
 				{
 					document.querySelector('.theerror').innerHTML = `Error: Response from Sugoi-Japanese-Translator is not valid JSON, see the browser console. Retrying in ${retryIn}ms.`
