@@ -41,7 +41,8 @@
 		body > p { /* added by clipboard-inserter extension, but then removed by this page's script */
 			display: none;
 		}
-		html.ZENMODE .faq,
+		html.ZENMODE .readme,
+		html.HIDE_README .readme,
 		html.ZENMODE.HIDE_SETTINGS_IN_ZEN_MODE .sugoi__settings {
 			display: none;
 		}
@@ -114,7 +115,7 @@
 </head>
 <body>
 <div class="theerror"></div>
-<div class="faq">
+<div class="readme">
 <div class="thewarning"></div>
 <i><b>Nothing was inserted yet (the textarea is between this README and settings)
 <br>by clipboard-inserter extension.
@@ -313,8 +314,20 @@ You can use this upscaler (quality is better than Magpie) for most VNs:
 		<input checked type="checkbox" name="DEDUPLICATE"/>
 	</label>
 	<label>
+		(default=option #2, <i>cur=option #<span data-var="NONJAP_INTO_LOG"></span></i>) Show & save messages without Japanese symbols into the log.
+		<select name="NONJAP_INTO_LOG" size="3">
+			<option value="1">Don't</option>
+			<option value="2">Only if it's just punctuation</option>
+			<option value="3">Everything</option>
+		</select>
+	</label>
+	<label>
 		(default=http://localhost:14366/, <i>cur=<span data-var="BACKEND_URL"></span></i>) Sugoi's Backend URL
 		<input type="text" name="BACKEND_URL"/>
+	</label>
+	<label>
+		(default=yes, <i>cur=<span data-var="SHOW_README"></span></i>) Show the very long README.
+		<input checked type="checkbox" name="SHOW_README"/>
 	</label>
 	<label>
 		(default=no, <i>cur=<span data-var="SHOW_SETTINGS_IN_ZEN_MODE"></span></i>) Show these settings in zen mode
@@ -353,7 +366,7 @@ const enableZenMode = () => {
 		document.documentElement.scrollTo(document.documentElement.scrollLeft, 0)
 	}
 	zenmodeEnabled = true
-	document.querySelector('.faq').style.display = 'none'
+	document.querySelector('.readme').style.display = 'none'
 }
 
 const wait = async (ms) => {
@@ -618,6 +631,8 @@ const settings = {
 	IS_LOG_MULTISESSION: 1,
 	IS_CACHE_MULTISESSION: 1,
 	DEDUPLICATE: 1,
+	NONJAP_INTO_LOG: 2,
+	SHOW_README: 1,
 	SHOW_SETTINGS_IN_ZEN_MODE: 0,
 	COLOR_THEME: 'white',
 	BACKEND_VERSION: 1, // this is used only to autoclean cache when version in localStorage/sessionStorage is smaller
@@ -625,7 +640,7 @@ const settings = {
 }
 freezeTypesOfExistingProps(settings, true)
 Object.preventExtensions(settings)
-window.s = settings
+window.s = settings // for debugging
 
 const INVISIBLE_SETTINGS = ['BACKEND_VERSION']
 
@@ -854,6 +869,11 @@ sugoiSettingsForm.onsubmit = function (e) {
 						{
 							return true
 						}
+						if (k === 'NONJAP_INTO_LOG')
+						{
+							v = +v
+							return true
+						}
 						else
 						{
 							console.error('unknown select! %O', el)
@@ -1055,16 +1075,20 @@ setInterval(() => {
 			document.documentElement.classList.remove('COLOR_THEME-' + theme)
 		}
 	}
-	document.documentElement.classList[
-		settings.SHOW_SETTINGS_IN_ZEN_MODE === 1
-		? 'add'
-		: 'remove'
-	]('SHOW_SETTINGS_IN_ZEN_MODE')
-	document.documentElement.classList[
-		settings.SHOW_SETTINGS_IN_ZEN_MODE === 1
-		? 'remove'
-		: 'add'
-	]('HIDE_SETTINGS_IN_ZEN_MODE')
+
+	for (const opt of ['SHOW_README', 'SHOW_SETTINGS_IN_ZEN_MODE'])
+	{
+		document.documentElement.classList[
+			settings[opt] === 1
+			? 'add'
+			: 'remove'
+		](opt)
+		document.documentElement.classList[
+			settings[opt] === 1
+			? 'remove'
+			: 'add'
+		](opt.replace(/^SHOW_/, 'HIDE_'))
+	}
 	//document.documentElement.setAttribute('data-night-mode', settings.NIGHT_MODE === 1 ? '1' : '0')
 	document.querySelectorAll('span[data-var]').forEach(x => {
 		const varName = x.getAttribute('data-var')
@@ -1156,7 +1180,7 @@ const wait = async (ms) => {
 let lastTranslatedTextSource = ''
 let lastTranslatedTextResult = ''
 
-if (typeof settings === 'undefined') // that means it's deepl or google translate
+if (typeof settings === 'undefined') // that means it's DeepL or Google Translate
 {
 	window.settings = {
 		DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED: 500,
@@ -1232,19 +1256,60 @@ setInterval(async () => {
 				}
 			}
 		}
-		document.querySelector('.sugoi__result').innerHTML = '... ... ... ... ... ...'
+		document.querySelector('.sugoi__result').innerHTML = '... ... ... ... ... ... ... ... ...'
 		const retryIn = 1000
+		let temporailyDisallowBreak = false
 		for (;;)
 		{
 			if (await new Promise(resolve => fetch(settings.BACKEND_URL, {
 				method: 'POST',
-				headers: {'Content-Type': 'application/json'},
+				...(
+					settings.BACKEND_URL.includes('/translate')
+					? {}
+					: {headers: {'Content-Type': 'application/json'}}
+				),
 				body: settings.BACKEND_URL.includes('/translate') ? textSource : JSON.stringify({
 					message: 'translate sentences',
 					content: textSource
 				})
 			})
 			.catch(async (err) => {
+				if (!settings.BACKEND_URL.includes('/translate'))
+				{
+					const newBackendUrl = settings.BACKEND_URL.replace(/\/+$/, '') + '/translate'
+					if (await new Promise(resolve => {
+						fetch(newBackendUrl, {
+							method: 'POST',
+							//headers: {'Content-Type': 'application/json'},
+							body: textSource
+						})
+						.catch(e => resolve(false))
+						.then(async (res) => {
+							try
+							{
+								await res.json()
+								console.log(
+'Switching the backend URL from %s to %s without updating/saving settings because the one without /translate didn\'t work',
+									settings.BACKEND_URL, newBackendUrl
+								)
+								// we don't save it into localStorage just in case
+								settings.BACKEND_URL = newBackendUrl
+								temporailyDisallowBreak = true
+								resolve(true)
+							}
+							catch (e)
+							{
+console.error('Tried to use the fallback, connection was successful, but it returned an incorrect JSON message')
+								resolve(false)
+							}
+						})
+					}))
+					{
+						resolve(true)
+						return
+					}
+				}
+				console.log(err.message)
 				document.querySelector('.theerror').innerHTML = 'Error: ' + err.message + `. Retrying in ${retryIn}ms.`
 				console.error(err)
 				await wait(retryIn)
@@ -1258,9 +1323,11 @@ setInterval(async () => {
 					resolve(false)
 					return
 				}
-				try {
+				try
+				{
 					lastTranslatedTextResult = (await res.json()).trim() // it sends us a JSON string
-				} catch (e)
+				}
+				catch (e)
 				{
 					document.querySelector('.theerror').innerHTML = `Error: Response from Sugoi-Japanese-Translator is not valid JSON, see the browser console. Retrying in ${retryIn}ms.`
 					console.error(e)
@@ -1295,8 +1362,15 @@ setInterval(async () => {
 				resolve(true)
 			})))
 			{
-				locked = false
-				break
+				if (temporailyDisallowBreak)
+				{
+					temporailyDisallowBreak = false
+				}
+				else
+				{
+					locked = false
+					break
+				}
 			}
 		}
 		//deeplGoogle-SugoiEnd
@@ -1379,11 +1453,39 @@ window.mutObserver = new MutationObserver(function (mutations) { mutations.forEa
 	//console.log('step4')
 
 
-	if (!/[一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]/u.test(text)) return//[ａ-ｚＡ-Ｚ０-９]+|
+	if (!/[一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]/u.test(text)) //[ａ-ｚＡ-Ｚ０-９]+|
+	{
+		if (
+			typeof SUGOI !== 'undefined'
+			&&
+			(
+				settings.NONJAP_INTO_LOG === 3
+				||
+				(
+					settings.NONJAP_INTO_LOG === 2
+					&&
+					/^[\s\n♪_\\\/<>\u2003-\u2005´*•‧‣%§†‡‰#№¡!！՜¿?？⁈⁉՞;；:：׃⁏'‘‚׳`‛’"״「」「」『』﹁﹂““””„‟（）()【】［］\[\]《》{}｛　｝﹏,，֊.।。‖։~〜…‥«»\-]+$/.test(text)
+				)
+			)
+		)
+		{
+			const t = Date.now()
+			addLogMessageToDom(
+				dbLogKeyPrefix   + t,
+				text,
+				text,
+			)
+			nonRamLocalStoreSet(
+				dbLogKeyPrefix + t,
+				[text, text]
+			)
+		}
+		return
+	}
 	// ^ why multiple []?
 	if (/![♪_\\\/<>\u2003-\u2005´*•‧‣%§†‡‰#№¡!！՜¿?？⁈⁉՞;；:：׃⁏'‘‚׳`‛’"״「」「」『』﹁﹂““””„‟（）()【】［］\[\]《》{}｛　｝﹏,，֊.।。‖։~〜…‥«»\-]$/.test(text))
 	{
-		text += '。'
+		text += '。' // For better translation
 	}
 	text = text.replace(/([」」])/g, '$1\n')
 	text = text.replace(/(.+(?:」|。|？|)(?:\s|\n)*)(「)/m, '$2')
