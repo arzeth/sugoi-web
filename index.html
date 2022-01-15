@@ -1464,7 +1464,7 @@ window.mutObserver = new MutationObserver(function (mutations) { mutations.forEa
 				(
 					settings.NONJAP_INTO_LOG === 2
 					&&
-					/^[\s\n♪_\\\/<>\u2003-\u2005´*•‧‣%§†‡‰#№¡!！՜¿?？⁈⁉՞;；:：׃⁏'‘‚׳`‛’"״「」「」『』﹁﹂““””„‟（）()【】［］\[\]《》{}｛　｝﹏,，֊.।。‖։~〜…‥«»\-]+$/.test(text)
+					/^[\s\n♪_\\\/<>\u2003-\u2005´*•‧‣%§†‡‰#№¡!！՜¿?？⁈⁉՞;；:：׃⁏'‘‚׳`‛’"״「」「」『』﹁﹂““””„‟（）()【】［］\[\]《》{}｛　｝﹏,，、֊.।。‖։~〜…‥«»\-]+$/.test(text)
 				)
 			)
 		)
@@ -1483,7 +1483,7 @@ window.mutObserver = new MutationObserver(function (mutations) { mutations.forEa
 		return
 	}
 	// ^ why multiple []?
-	if (/![♪_\\\/<>\u2003-\u2005´*•‧‣%§†‡‰#№¡!！՜¿?？⁈⁉՞;；:：׃⁏'‘‚׳`‛’"״「」「」『』﹁﹂““””„‟（）()【】［］\[\]《》{}｛　｝﹏,，֊.।。‖։~〜…‥«»\-]$/.test(text))
+	if (/![♪_\\\/<>\u2003-\u2005´*•‧‣%§†‡‰#№¡!！՜¿?？⁈⁉՞;；:：׃⁏'‘‚׳`‛’"״「」「」『』﹁﹂““””„‟（）()【】［］\[\]《》{}｛　｝﹏,，、֊.।。‖։~〜…‥«»\-]$/.test(text))
 	{
 		text += '。' // For better translation
 	}
@@ -1492,7 +1492,7 @@ window.mutObserver = new MutationObserver(function (mutations) { mutations.forEa
 	text = text.replace(/(?:\r?\n){2,}/gm, '\n')
 	text = text.trim()
 
-	const onlyJapSymbols = text.replace(/[a-zа-яёĭŭñѫѧѣąǫęųįäöëüïŕřþðə°µ+!@#$%^&*¹²³⁴⁵⁶⁷⁸⁹⁰♪_\\\/0-9\s<>\u2003-\u2005´*•‧‣%§†‡‰#№¡!！՜¿?？⁈⁉՞;；:：׃⁏'‘‚׳`‛’"״「」「」『』﹁﹂““””„‟（）()【】［］\[\]《》{}｛　｝﹏,，֊.।。‖։~〜…‥«»\-]+/ig, '')
+	const onlyJapSymbols = text.replace(/[a-zа-яёĭŭñѫѧѣąǫęųįäöëüïŕřþðə°µ+!@#$%^&*¹²³⁴⁵⁶⁷⁸⁹⁰♪_\\\/0-9\s<>\u2003-\u2005´*•‧‣%§†‡‰#№¡!！՜¿?？⁈⁉՞;；:：׃⁏'‘‚׳`‛’"״「」「」『』﹁﹂““””„‟（）()【】［］\[\]《》{}｛　｝﹏,，、֊.।。‖։~〜…‥«»\-]+/ig, '')
 	if (/セーブ画面へ移動します|ゲームを終了します/.test(onlyJapSymbols)) return // buttons' tooltips
 	if (onlyJapSymbols.replace(/は|い|え/g, '').length <= 0)//<= 1
 	{
