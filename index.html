@@ -73,6 +73,11 @@
 			padding-left: 2px;
 			padding-right: 2px;
 		}
+		.sugoi__log__message__source,
+		.sugoi__result,
+		.sugoi__log__message__result {
+			white-space: pre-wrap;
+		}
 		.sugoi__log {
 			margin-top: 15px; /* 1px less than msg+msg */
 		}
@@ -950,7 +955,7 @@ sugoiSettingsForm.onsubmit = function (e) {
 			if (INVISIBLE_SETTINGS.includes(prop)) continue
 			if (prop === 'NIGHT_MODE')
 			{
-				console.warn(JSON.parse(JSON.stringify(newSettingsIncomingFromTheForm)))
+				//console.warn(JSON.parse(JSON.stringify(newSettingsIncomingFromTheForm)))
 			}
 			if (!hasOwn(newSettingsIncomingFromTheForm, prop))
 			{
@@ -1062,8 +1067,8 @@ document.querySelector('.cleanAllCache-Button').onclick = () => {
 // __chch can be supplied for microoptimization, see the `else` branch
 const removeTheEarilestLogMessages = (howMany, __chch) => {
 	if (howMany <= 0) return
-	console.log('removeTheEarilestLogMessages(%O)', howMany)
-	console.trace()
+	//console.log('removeTheEarilestLogMessages(%O)', howMany)
+	//console.trace()
 	if (availableNonRamStorages.length)
 	{
 		const fullDbKeys = removeEarliestRecordsInNonRamCache('l', howMany)
@@ -1216,6 +1221,11 @@ const addLogMessageToDom = (
 	console.assert(typeof sourceId === 'string')
 	console.assert(typeof sourceTxt === 'string')
 	console.assert(typeof resultTxt === 'string')
+	if (resultTxt.includes('<unk>')) // fairseq/options.py says "Words missing from train set are replaced with <unk>"
+	{
+		console.warn('<unk> found in `%s` → `%s`', sourceTxt, resultTxt)
+	}
+	resultTxt = resultTxt.replace(/ *<unk> */g, ' ')
 	const newLogMsg = document.createElement('DIV')
 	newLogMsg.className = 'sugoi__log__message'
 	newLogMsg.dataset.id = sourceId
@@ -1223,7 +1233,7 @@ const addLogMessageToDom = (
 		const newLogMsgSource = document.createElement('DIV')
 		newLogMsgSource.className = 'sugoi__log__message__source'
 		newLogMsgSource.setAttribute('lang', 'jp')
-		newLogMsgSource.innerHTML = sourceTxt
+		newLogMsgSource.textContent = sourceTxt
 		newLogMsg.appendChild(newLogMsgSource)
 	}
 	if (resultTxt) // it might be empty if settings.NONJAP_INTO_LOG > 1
@@ -1231,7 +1241,7 @@ const addLogMessageToDom = (
 		const newLogMsgResult = document.createElement('DIV')
 		newLogMsgResult.className = 'sugoi__log__message__result'
 		newLogMsgResult.setAttribute('lang', 'en')
-		newLogMsgResult.innerHTML = resultTxt
+		newLogMsgResult.textContent = resultTxt
 		newLogMsg.appendChild(newLogMsgResult)
 	}
 	sugoiLog.prepend(newLogMsg)
