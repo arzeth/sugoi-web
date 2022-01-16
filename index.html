@@ -1226,6 +1226,7 @@ const addLogMessageToDom = (
 		newLogMsgSource.innerHTML = sourceTxt
 		newLogMsg.appendChild(newLogMsgSource)
 	}
+	if (resultTxt) // it might be empty if settings.NONJAP_INTO_LOG > 1
 	{
 		const newLogMsgResult = document.createElement('DIV')
 		newLogMsgResult.className = 'sugoi__log__message__result'
@@ -1759,7 +1760,7 @@ window.mutObserver = new MutationObserver(function (mutations) { mutations.forEa
 		{
 			const t = Date.now()
 			addLogMessageToDom(
-				dbLogKeyPrefix   + t,
+				dbLogKeyPrefix + t,
 				text,
 				'',
 			)
