@@ -286,7 +286,7 @@ You can use this upscaler (quality is better than Magpie) for most VNs:
 		<input type="number" name="DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED" min="20" value=""/>
 	</label>
 	<label>
-		(default=2, min=0, <i>cur=<span data-var="DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE"></span></i>) (for performance reasons useful for skipping already read messages that aren't yet in cache) Drop all pending messages except the newest one unless the queue size is ≤
+		(default=2, min=0, <i>cur=<span data-var="DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE"></span></i>) (for performance reasons useful for skipping already read messages that aren't yet in cache) <b>Drop</b> all pending messages except the newest one unless the queue size is ≤
 		<input type="number" name="DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE" value="" min="0" placeholder=""/>
 	</label>
 	<!--<label> DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE's duplicate?
@@ -941,7 +941,7 @@ sugoiSettingsForm.onsubmit = function (e) {
 				})
 			)
 		}
-		console.log('newSettingsIncomingFromTheForm=%O', JSON.parse(JSON.stringify(newSettingsIncomingFromTheForm)))
+		//console.log('newSettingsIncomingFromTheForm=%O', JSON.parse(JSON.stringify(newSettingsIncomingFromTheForm)))
 		for (const prop in settings)
 		{
 			if (!hasOwn(settings, prop)) continue
@@ -1400,7 +1400,7 @@ setInterval(async () => {
 							}
 							catch (e)
 							{
-console.error('Tried to use the fallback, connection was successful, but it returned an incorrect JSON message')
+console.error('Tried to use the fallback: although connection was successful, the server returned an incorrect JSON message')
 								resolve(false)
 							}
 						})
