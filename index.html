@@ -1148,6 +1148,18 @@ ${
 	? '.sugoi__source {border-bottom: 0}'
 	: ''
 }
+${
+	settings.LOG_RESULT_FONTSIZE < 1 
+	? `
+.sugoi__log__message__result, .sugoi__log__message__result::before {
+	display: none
+}
+.sugoi__log__message + .sugoi__log__message {
+	margin-top: 9px;
+}
+`
+	: ''
+}
 		`
 
 		for (const theme of possibleColorThemes)
