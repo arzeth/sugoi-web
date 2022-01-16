@@ -9,6 +9,9 @@
 	<meta charset="utf-8"/>
 	<title>Sugoi-Japanese-Translator's web frontend</title>
 	<style>
+		*, *::before, *::after {
+			box-sizing: border-box;
+		}
 		html,textarea,input,select,button {
 			/* didn't think too much about fonts */
 			font-family: 'Noto Sans JP', 'Noto Sans', 'Source Han Gothic';
@@ -19,6 +22,9 @@
 		html.ZENMODE, .ZENMODE body {
 			margin: 0;
 			padding: 0;
+		}
+		textarea {
+			line-height: 1.3;
 		}
 		/*html.COLOR_THEME-white {
 			background: #000;
@@ -55,13 +61,13 @@
 		}
 		.sugoi__source,
 		.sugoi__log__message__source {
-			font-size: 24px;
+			font-size: 28.5px;
 			padding-left: 2px;
 			padding-right: 2px;
 		}
 		.sugoi__result,
 		.sugoi__log__message__result {
-			font-size: 15px;
+			font-size: 18px;
 			padding-left: 2px;
 			padding-right: 2px;
 		}
@@ -107,11 +113,17 @@
 		.sugoi__settings__tip {
 			margin-top: 15px;
 		}
+		.CUSTOM_CSS {
+			width: 600px;
+			max-width: 92vw;
+		}
 		.thewarning, .theerror {
 			color: red;
 			font-weight: bold;
 		}
 	</style>
+	<style id="sugoi__fontsizes-css"></style>
+	<style id="sugoi__custom-css"></style>
 </head>
 <body>
 <div class="theerror"></div>
@@ -236,7 +248,7 @@ You can use this upscaler (quality is better than Magpie) for most VNs:
 
 <div>
 	<!--placeholder="Enter the text in 日本語"-->
-<textarea class="sugoi__source" readonly rows="4" placeholder="Nothing was pasted yet" lang="jp">
+<textarea class="sugoi__source" readonly rows="4"  data-minrows="4" placeholder="Nothing was pasted yet" lang="jp">
 </textarea><div class="sugoi__result" lang="en">
 </div><div class="sugoi__log"><!--
 	<div class="sugoi__log__message">
@@ -270,7 +282,7 @@ You can use this upscaler (quality is better than Magpie) for most VNs:
 		<br>E.g. if one heroine says "yes!", another says "no!", another says "yes!" again, then 3 records would be in log but only 2 records in cache.
 	</div>
 	<label>
-		Don't do anything if number of Japanese symbols in a single paste exceed (default=500, min=20, max=1500, <i>cur=<span data-var="DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED"></span></i>):
+		Don't do anything if number of Japanese symbols in a single paste exceed (default=260, min=20, max=1500, <i>cur=<span data-var="DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED"></span></i>):
 		<input type="number" name="DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED" min="20" value=""/>
 	</label>
 	<label>
@@ -314,7 +326,7 @@ You can use this upscaler (quality is better than Magpie) for most VNs:
 		<input checked type="checkbox" name="DEDUPLICATE"/>
 	</label>
 	<label>
-		(default=option #2, <i>cur=option #<span data-var="NONJAP_INTO_LOG"></span></i>) Show & save messages without Japanese symbols into the log.
+		(default=option #2, <i>cur=option #<span data-var="NONJAP_INTO_LOG"></span></i>) Show & save messages without Japanese symbols in the log.
 		<select name="NONJAP_INTO_LOG" size="3">
 			<option value="1">Don't</option>
 			<option value="2">Only if it's just punctuation</option>
@@ -339,6 +351,25 @@ You can use this upscaler (quality is better than Magpie) for most VNs:
 			<option value="white">White</option>
 			<option value="black">Black</option>
 		</select>
+	</label>
+	<label>
+		(default=28.5, <i>cur=<span data-var="LASTMSG_SOURCE_FONTSIZE"></span></i>) Font size (px) for the last message's Japanese source text.
+		<input step="0.1" type="number" name="LASTMSG_SOURCE_FONTSIZE"/>
+	</label>
+	<label>
+		(default=18, <i>cur=<span data-var="LASTMSG_RESULT_FONTSIZE"></span></i>) Font size (px) for the last message's translated text.
+		<input step="0.1" type="number" name="LASTMSG_RESULT_FONTSIZE"/>
+	</label>
+	<label>
+		(default=28.5, <i>cur=<span data-var="LOG_SOURCE_FONTSIZE"></span></i>) Font size (px) for a log message's Japanese source text.
+		<input step="0.1" type="number" name="LOG_SOURCE_FONTSIZE"/>
+	</label>
+	<label>
+		(default=18, <i>cur=<span data-var="LOG_RESULT_FONTSIZE"></span></i>) Font size (px) for a log message's translated text.
+		<input step="0.1" type="number" name="LOG_RESULT_FONTSIZE"/>
+	</label>
+	<label>Custom CSS. In case you do make everything invisible, press F12 and remove the third &lt;style&gt; in &lt;head&gt; to be able to save the settings.
+		<textarea class="CUSTOM_CSS" name="CUSTOM_CSS" rows="3" data-minrows="3" data-maxrows="13"></textarea>
 	</label>
 	<input type="submit" value="Save all settings"/>
 	<button type="button" class="resetSettingsButton">Reset settings, forget everything and reload this page</button>
@@ -619,7 +650,7 @@ const possibleColorThemes = Object.freeze(
 )
 
 const settings = {
-	DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED: 500,
+	DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED: 260,
 	MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE: 300,
 	// if Ctrl'ing through a VN
 	INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE: 1300,
@@ -632,17 +663,23 @@ const settings = {
 	IS_CACHE_MULTISESSION: 1,
 	DEDUPLICATE: 1,
 	NONJAP_INTO_LOG: 2,
+	BACKEND_URL: 'http://localhost:14366/',
 	SHOW_README: 1,
 	SHOW_SETTINGS_IN_ZEN_MODE: 0,
 	COLOR_THEME: 'white',
+	LASTMSG_SOURCE_FONTSIZE: 28.5,
+	LASTMSG_RESULT_FONTSIZE: 18,
+	LOG_SOURCE_FONTSIZE: 28.5,
+	LOG_RESULT_FONTSIZE: 18,
+	CUSTOM_CSS: '',
 	BACKEND_VERSION: 1, // this is used only to autoclean cache when version in localStorage/sessionStorage is smaller
-	BACKEND_URL: 'http://localhost:14366/'
 }
 freezeTypesOfExistingProps(settings, true)
 Object.preventExtensions(settings)
 window.s = settings // for debugging
 
 const INVISIBLE_SETTINGS = ['BACKEND_VERSION']
+const STRING_KEYS = ['BACKEND_URL', 'CUSTOM_CSS', 'COLOR_THEME']
 
 const sugoiSettingsForm = document.querySelector('.sugoi__settings')
 
@@ -662,6 +699,7 @@ const fillInput = (k, v) => {
 	{
 		el.value = v
 	}
+	if (el.__autoresize) el.__autoresize() // or just el.__autoresize?.()
 }
 const fillTheFormValues = () => {
 	for (const k in settings)
@@ -713,7 +751,7 @@ const syncSettings = () => {
 		// upload or download?
 		const needAlsoToDownloadSettings = !areObjectShallowEqual(b, lastGotFromLocalStoreThing)
 		let bChanged = false
-		console.log('needAlsoToDownloadSettings')
+		console.log('Applying settings from localStorage or sessionStorage.')
 		if (Number.isSafeInteger(+b.BACKEND_VERSION) && +b.BACKEND_VERSION < settings.BACKEND_VERSION)
 		{
 			let cacheCleaned = false
@@ -746,9 +784,13 @@ const syncSettings = () => {
 				if (
 					/*needAlsoToDownloadSettings && */
 					(
-						key !== 'BACKEND_URL'
-						&&
-						/^[0-9]+$/.test(b[key])
+						STRING_KEYS.includes(key)
+						||
+						(
+							key.includes('FONTSIZE')
+							? /^[0-9]+(?:\.[0-9]+)?$/.test(b[key])
+							: /^[0-9]+$/.test(b[key])
+						)
 					)
 					||
 					(
@@ -819,7 +861,7 @@ sugoiSettingsForm.onsubmit = function (e) {
 			while (syncSettingsLocked) await wait(300)
 		}
 		syncSettingsLocked = true
-		console.log(Array.from(new FormData(sugoiSettingsForm)))
+		//console.log(Array.from(new FormData(sugoiSettingsForm)))
 		const newSettingsIncomingFromTheForm = {
 			//...settings,
 			...Object.fromEntries(
@@ -837,7 +879,11 @@ sugoiSettingsForm.onsubmit = function (e) {
 					}
 					if (el.type === 'number')
 					{
-						if (!/^[0-9]+$/.test(v))
+						if (!(
+							k.includes('FONTSIZE')
+							? /^[0-9]+(?:\.[0-9]+)?$/.test(v)
+							: /^[0-9]+$/.test(v)
+						))
 						{
 							el.focus()
 							return false
@@ -879,6 +925,11 @@ sugoiSettingsForm.onsubmit = function (e) {
 							console.error('unknown select! %O', el)
 						}
 					}
+					else if (STRING_KEYS.includes(k))
+					{
+						v = v.trim()
+						return true
+					}
 					else console.error('bad type! %O', el)
 					return true
 				})
@@ -894,17 +945,26 @@ sugoiSettingsForm.onsubmit = function (e) {
 		for (const prop in settings)
 		{
 			if (!hasOwn(settings, prop)) continue
+			if (INVISIBLE_SETTINGS.includes(prop)) continue
 			if (prop === 'NIGHT_MODE')
 			{
 				console.warn(JSON.parse(JSON.stringify(newSettingsIncomingFromTheForm)))
 			}
-			if (!hasOwn(newSettingsIncomingFromTheForm, prop) && !INVISIBLE_SETTINGS.includes(prop))
+			if (!hasOwn(newSettingsIncomingFromTheForm, prop))
 			{
 				if (prop === 'IS_LOG_MULTISESSION' || prop === 'IS_CACHE_MULTISESSION') continue // they are disabled
-				console.log('prop %O to 0', prop)
+				//console.log('prop %O to 0 because it\'s actually a checkbox', prop)
 				newSettingsIncomingFromTheForm[prop] = 0 // unchecked checkbox
 			}
 			settings[prop] = newSettingsIncomingFromTheForm[prop]
+		}
+		if (
+			settings.LASTMSG_SOURCE_FONTSIZE < 1
+			&&
+			settings.LASTMSG_RESULT_FONTSIZE < 1
+		)
+		{
+			alert('Let\'s hope you know what you are doing with the last message\'s font sizes set to 0.')
 		}
 		lastGotFromLocalStoreThing = newSettingsIncomingFromTheForm
 		localStoreSet('sugoi__settings', newSettingsIncomingFromTheForm)
@@ -1001,6 +1061,7 @@ document.querySelector('.cleanAllCache-Button').onclick = () => {
 const removeTheEarilestLogMessages = (howMany, __chch) => {
 	if (howMany <= 0) return
 	console.log('removeTheEarilestLogMessages(%O)', howMany)
+	console.trace()
 	if (availableNonRamStorages.length)
 	{
 		const fullDbKeys = removeEarliestRecordsInNonRamCache('l', howMany)
@@ -1012,9 +1073,9 @@ const removeTheEarilestLogMessages = (howMany, __chch) => {
 				+ fullDbKeys[i]//.slice(0, dbLogKeyPrefixPlusDateLength)
 				+ '"]'
 			)
-			console.log('[data-id="'
+			/*console.log('[data-id="'
 				+ fullDbKeys[i]//.slice(0, dbLogKeyPrefixPlusDateLength)
-				+ '"]', el)
+				+ '"]', el)*/
 			if (el) sugoiLog.removeChild(el)
 		}
 	}
@@ -1052,7 +1113,7 @@ document.querySelector('.cleanAllLogExcept-Button').onclick = () => {
 
 
 
-
+let lastSettingsAppiledInTheSetInterval = {}
 
 // TODO: don't use setInterval
 setInterval(() => {
@@ -1064,45 +1125,71 @@ setInterval(() => {
 		}
 	}
 
-	for (const theme of possibleColorThemes)
+	if (!areObjectShallowEqual(settings, lastSettingsAppiledInTheSetInterval))
 	{
-		if (theme === settings.COLOR_THEME)
-		{
-			document.documentElement.classList.add('COLOR_THEME-' + theme)
-		}
-		else
-		{
-			document.documentElement.classList.remove('COLOR_THEME-' + theme)
-		}
-	}
+		lastSettingsAppiledInTheSetInterval = {...settings}
+		document.getElementById('sugoi__custom-css').innerHTML = settings.CUSTOM_CSS
+		document.getElementById('sugoi__fontsizes-css').innerHTML =
+`\
+.sugoi__source {
+	font-size: ${settings.LASTMSG_SOURCE_FONTSIZE}px
+},
+.sugoi__result {
+	font-size: ${settings.LASTMSG_RESULT_FONTSIZE}px
+}
+.sugoi__log__message__source {
+	font-size: ${settings.LOG_SOURCE_FONTSIZE}px
+}
+.sugoi__log__message__result {
+	font-size: ${settings.LOG_RESULT_FONTSIZE}px
+}
+${
+	settings.LASTMSG_RESULT_FONTSIZE < 1 
+	? '.sugoi__source {border-bottom: 0}'
+	: ''
+}
+		`
 
-	for (const opt of ['SHOW_README', 'SHOW_SETTINGS_IN_ZEN_MODE'])
-	{
-		document.documentElement.classList[
-			settings[opt] === 1
-			? 'add'
-			: 'remove'
-		](opt)
-		document.documentElement.classList[
-			settings[opt] === 1
-			? 'remove'
-			: 'add'
-		](opt.replace(/^SHOW_/, 'HIDE_'))
-	}
-	//document.documentElement.setAttribute('data-night-mode', settings.NIGHT_MODE === 1 ? '1' : '0')
-	document.querySelectorAll('span[data-var]').forEach(x => {
-		const varName = x.getAttribute('data-var')
-		if (!hasOwn(settings, varName))
+		for (const theme of possibleColorThemes)
 		{
-			console.warn('data-var=`%s` is bad, see the `settings` variable', varName)
-			return
+			if (theme === settings.COLOR_THEME)
+			{
+				document.documentElement.classList.add('COLOR_THEME-' + theme)
+			}
+			else
+			{
+				document.documentElement.classList.remove('COLOR_THEME-' + theme)
+			}
 		}
-		x.innerHTML = (
-			x.parentNode.parentNode.querySelector('[type="checkbox"]')
-			? (+settings[varName] ? 'yes' : 'no')
-			: settings[varName]
-		)
-	})
+
+		for (const opt of ['SHOW_README', 'SHOW_SETTINGS_IN_ZEN_MODE'])
+		{
+			document.documentElement.classList[
+				settings[opt] === 1
+				? 'add'
+				: 'remove'
+			](opt)
+			document.documentElement.classList[
+				settings[opt] === 1
+				? 'remove'
+				: 'add'
+			](opt.replace(/^SHOW_/, 'HIDE_'))
+		}
+		//document.documentElement.setAttribute('data-night-mode', settings.NIGHT_MODE === 1 ? '1' : '0')
+		document.querySelectorAll('span[data-var]').forEach(x => {
+			const varName = x.getAttribute('data-var')
+			if (!hasOwn(settings, varName))
+			{
+				console.warn('data-var=`%s` is bad, see the `settings` variable', varName)
+				return
+			}
+			x.innerHTML = (
+				x.parentNode.parentNode.querySelector('[type="checkbox"]')
+				? (+settings[varName] ? 'yes' : 'no')
+				: settings[varName]
+			)
+		})
+	}
 }, 500)
 
 
@@ -1111,6 +1198,7 @@ const addLogMessageToDom = (
 	sourceTxt,
 	resultTxt,
 ) => {
+	if (!settings.MAX_LOG_SIZE) return
 	console.assert(typeof sourceId === 'string')
 	console.assert(typeof sourceTxt === 'string')
 	console.assert(typeof resultTxt === 'string')
@@ -1183,7 +1271,7 @@ let lastTranslatedTextResult = ''
 if (typeof settings === 'undefined') // that means it's DeepL or Google Translate
 {
 	window.settings = {
-		DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED: 500,
+		DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED: 260,
 		MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE: 300,
 		// if Ctrl'ing through a VN
 		INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE: 1300,
@@ -1230,6 +1318,7 @@ setInterval(async () => {
 			)
 		}
 		document.querySelector('.sugoi__source').value = textSource
+		document.querySelector('.sugoi__source').__autoresize()
 		if (settings.MAX_CACHE_SIZE !== 0)
 		{
 			if (cacheInRam.has(textSource))
@@ -1318,7 +1407,7 @@ console.error('Tried to use the fallback, connection was successful, but it retu
 			.then(async (res) => {
 				if (!res)
 				{
-					document.querySelector('.theerror').innerHTML = 'Error: Could not connect to Sugoi-Japanese-Translator. Retrying in ${retryIn}ms.'
+					document.querySelector('.theerror').innerHTML = `Error: Could not connect to Sugoi-Japanese-Translator. Retrying in ${retryIn}ms.`
 					await wait(retryIn)
 					resolve(false)
 					return
@@ -1431,6 +1520,191 @@ console.error('Tried to use the fallback, connection was successful, but it retu
 }*/
 
 
+function autoResizeScrollableElement (
+	el,
+	{
+		 canShrink = true,
+		 minHeightPx = 0,
+		 maxHeightPx,
+		 minLines,
+		 maxLines,
+	} = {}
+)
+{
+	const FN_NAME = 'autoResizeScrollableElement'
+	if (
+		 typeof minLines !== 'undefined'
+		 && minLines !== null
+		 && Number.isNaN(+minLines)
+	)
+	{
+		 console.warn('%O:: minLines (%O) as a number is NaN', FN_NAME, minLines)
+	}
+	if (
+		 typeof maxLines !== 'undefined'
+		 && maxLines !== null
+		 && Number.isNaN(+maxLines)
+	)
+	{
+		 console.warn('%O:: maxLines (%O) as a number is NaN', FN_NAME, maxLines)
+	}
+	canShrink = (
+		 canShrink === true
+		 ||
+		 // @ts-ignore
+		 canShrink === 1 || canShrink === void 0 || canShrink === null
+	)
+
+	const style = window.getComputedStyle(el)
+	const unpreparedLineHeight = style.getPropertyValue('line-height')
+	if (unpreparedLineHeight === 'normal')
+	{
+		 console.error('%O:: line-height is unset for %O', FN_NAME, el)
+	}
+	const lineHeightPx = (
+		 unpreparedLineHeight === 'normal'
+		 ? 1.15 * parseFloat(style.getPropertyValue('font-size')) // 1.15 is a wrong number
+		 : parseFloat(unpreparedLineHeight)
+	)
+
+	// @ts-ignore
+	minHeightPx = parseFloat(minHeightPx || 0) || 0
+	//minHeight = Math.max(lineHeightPx, parseFloat(style.getPropertyValue('min-height')))
+	// @ts-ignore
+	maxHeightPx = parseFloat(maxHeightPx || 0) || Infinity
+	minLines = (
+		 minLines
+		 ? (
+			  Math.round(+minLines || 0) > 1
+			  ? Math.round(+minLines || 0)
+			  : 1
+		 )
+		 : 1
+	)
+	maxLines = (
+		 maxLines
+		 ? (Math.round(+maxLines || 0) || Infinity)
+		 : Infinity
+	)
+	//console.log('%O:: old ov.x=%O ov.y=%O, ov=%O', FN_NAME, style.getPropertyValue('overflow-x'), style.getPropertyValue('overflow-y'), style.getPropertyValue('overflow'))
+	/*if (overflowY !== 'scroll' && overflowY === 'hidden')
+	{
+		 console.warn('%O:: setting overflow-y to scroll', FN_NAME)
+	}*/
+	if (minLines > maxLines)
+	{
+		 console.warn('%O:: minLines > maxLines, therefore both parameters are ignored', FN_NAME)
+		 minLines = 1
+		 maxLines = Infinity
+	}
+	if (minHeightPx > maxHeightPx)
+	{
+		 console.warn('%O:: minHeightPx > maxHeightPx, therefore both parameters are ignored', FN_NAME)
+		 minHeightPx = 0
+		 maxHeightPx = Infinity
+	}
+	const topBottomBorderWidths = (
+		 parseFloat(style.getPropertyValue('border-top-width'))
+		 + parseFloat(style.getPropertyValue('border-bottom-width'))
+	)
+	let verticalPaddings = 0
+	if (style.getPropertyValue('box-sizing') === 'border-box')
+	{
+		 verticalPaddings += (
+			  parseFloat(style.getPropertyValue('padding-top'))
+			  + parseFloat(style.getPropertyValue('padding-bottom'))
+			  + topBottomBorderWidths
+		 )
+	}
+	else
+	{
+		 console.warn(
+			  '%O:: %O has `box-sizing: content-box`'
+			  + ' which is untested; you should set it to border-box. Continuing anyway.',
+			  FN_NAME, el
+		 )
+	}
+	const oldHeightPx = parseFloat(style.height)
+	if (el.tagName === 'TEXTAREA')
+	{
+		 el.setAttribute('rows', '1')
+		 //el.style.overflowY = 'hidden'
+	}
+	const oldScrollTop  = document.documentElement.scrollTop
+	const oldScrollLeft = document.documentElement.scrollLeft
+	// @ts-ignore
+	const oldScrollbarWidth = el.style.scrollbarWidth
+	el.style.height = ''
+
+	// Even when there is nothing to scroll,
+	// it causes an extra height at the bottom in the content area (tried Firefox 95).
+	// scrollbar-width is present only on Firefox 64+,
+	// other browsers use ::-webkit-scrollbar
+	// @ts-ignore
+	el.style.scrollbarWidth = 'none'
+
+	const maxHeightForMinLines = lineHeightPx * minLines + verticalPaddings // can be float
+	// .scrollHeight is always an integer unfortunately
+	const scrollHeight = el.scrollHeight + topBottomBorderWidths
+	/*console.log(
+		 '%O:: lineHeightPx=%O * minLines=%O + verticalPaddings=%O, el.scrollHeight=%O, scrollHeight=%O',
+		 FN_NAME, lineHeightPx, minLines, verticalPaddings,
+		 el.scrollHeight, scrollHeight
+	)*/
+	const newHeightPx = Math.max(
+		 canShrink === true ? minHeightPx : oldHeightPx,
+		 Math.min(
+			  maxHeightPx,
+			  Math.max(
+					maxHeightForMinLines,
+					Math.min(
+							Math.max(scrollHeight, maxHeightForMinLines)
+						 - Math.min(scrollHeight, maxHeightForMinLines) < 1
+						 ? maxHeightForMinLines
+						 : scrollHeight,
+						 (
+							  maxLines > 0 && maxLines !== Infinity
+							  ? lineHeightPx * maxLines + verticalPaddings
+							  : Infinity
+						 )
+					)
+			  )
+		 )
+	)
+	// @ts-ignore
+	el.style.scrollbarWidth = oldScrollbarWidth
+	if (!Number.isFinite(newHeightPx) || newHeightPx < 0)
+	{
+		 console.error('%O:: BUG:: Invalid return value: `%O`', FN_NAME, newHeightPx)
+		 return
+	}
+	el.style.height = newHeightPx + 'px'
+	document.documentElement.scrollTo(oldScrollLeft, oldScrollTop)
+	//console.log('%O:: height: %O → %O', FN_NAME, oldHeightPx, newHeightPx)
+	/*if (el.tagName === 'TEXTAREA' && el.scrollHeight > newHeightPx)
+	{
+		 el.style.overflowY = 'scroll'
+	}*/
+}
+
+
+
+document.querySelectorAll('textarea').forEach(el => {
+	el.dataset.defaultrows = el.getAttribute('rows') || 3
+	el.__autoresize = () => autoResizeScrollableElement(
+		el,
+		{
+			minLines: el.getAttribute('data-minrows') || el.getAttribute('rows') || el.dataset.defaultrows,
+			maxLines: el.getAttribute('data-maxrows') || el.getAttribute('rows') || Infinity,
+		}
+	)
+})
+document.querySelector('[name="CUSTOM_CSS"]').addEventListener(
+	'input',
+	e => e.currentTarget.__autoresize()
+)
+
+
 window.mutObserver = new MutationObserver(function (mutations) { mutations.forEach((mutation) => {
 	//console.log('step1')
 	if (!(
@@ -1473,11 +1747,11 @@ window.mutObserver = new MutationObserver(function (mutations) { mutations.forEa
 			addLogMessageToDom(
 				dbLogKeyPrefix   + t,
 				text,
-				text,
+				'',
 			)
 			nonRamLocalStoreSet(
 				dbLogKeyPrefix + t,
-				[text, text]
+				[text, '']
 			)
 		}
 		return
