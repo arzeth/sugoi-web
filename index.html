@@ -16,8 +16,10 @@
 			/* didn't think too much about fonts */
 			font-family: 'Noto Sans JP', 'Noto Sans', 'Source Han Gothic';
 		}
-		html.ZENMODE {
-			scrollbar-width: none
+		@media (max-width: 599px) {
+			html.ZENMODE {
+				scrollbar-width: none
+			}
 		}
 		html.ZENMODE, .ZENMODE body {
 			margin: 0;
@@ -131,7 +133,7 @@
 <div class="thewarning"></div>
 <i><b>Nothing was inserted yet (the textarea is between this README and settings)
 <br>by clipboard-inserter extension.
-<br>When you insert, interface will change: zen mode will be activated (invisible scrollbar, no README, etc.).
+<br>When you insert, interface will change: zen mode will be activated (invisible scrollbar for windows with ≤599px width, no README, etc.).
 <br>Settings are at the bottom of the page.
 </b></i>
 <br>
