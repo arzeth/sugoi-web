@@ -1003,10 +1003,18 @@ const __getRecordsCountInNonRamDb = (type) => {
 	console.assert(type === 'c' || type === 'l')
 	if (availableNonRamStorages.length === 0) return 0
 
-	const p = getDbKeyPrefix(type)
-	return Object.keys(availableNonRamStorages[0])
-	.filter(x => x.startsWith(p))
-	.length
+	const prefix = getDbKeyPrefix(type)
+	const store = availableNonRamStorages[0]
+	/*return Object.keys(store)
+	.filter(x => x.startsWith(prefix))
+	.length*/
+	let ret = 0
+	for (const prop in store)
+	{
+		if (!hasOwn(store, prop)) continue
+		if (prop.startsWith(prefix)) ret++
+	}
+	return ret
 
 	/*
 	let ret = 0
@@ -1088,8 +1096,8 @@ const removeTheEarilestLogMessages = (howMany, __chch) => {
 	else
 	{
 		__chch = __chch || sugoiLog.children // TODO in the future: change to ||=
-		howMany = Math.min(howMany, ch.length) // yes, this line is not present inside removeEarliestRecordsInNonRamCache
 		const chLength = ch.length
+		howMany = Math.min(howMany, chLength) // yes, this line is not present inside removeEarliestRecordsInNonRamCache
 		for (let i = chLength - 1; i >= chLength - howMany; i--)
 		{
 			sugoiLog.removeChild(ch[i])
