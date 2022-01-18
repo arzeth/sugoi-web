@@ -2,8 +2,11 @@
 <html class="sugoi">
 <head>
 	<!--
-		@license CC0 (Public Domain)
 		@author Arzet Ro, 2022 <arzeth0@gmail.com>
+
+		@license CC0 (Creative Commons Zero v1.0 Universal) (i.e. Public Domain)
+		https://creativecommons.org/publicdomain/zero/1.0/deed
+
 		Source code: https://github.com/arzeth/sugoi-web
 	-->
 	<meta charset="utf-8"/>
@@ -584,7 +587,7 @@ const freezeTypeOfOneProp = (
 	obj,
 	key,
 	convertInputStringToNum
-) => 
+) =>
 {
 	let staticVar = obj[key]
 
@@ -1007,7 +1010,7 @@ const __getRecordsCountInNonRamDb = (type) => {
 
 	/*
 	let ret = 0
-	const re = new RegExp('^' + getDbKeyPrefix(type) + 
+	const re = new RegExp('^' + getDbKeyPrefix(type) +
 	for (const key in availableNonRamStorages[0])
 	{
 		if (re.test(key))
@@ -1148,12 +1151,12 @@ setInterval(() => {
 	font-size: ${settings.LOG_RESULT_FONTSIZE}px
 }
 ${
-	settings.LASTMSG_RESULT_FONTSIZE < 1 
+	settings.LASTMSG_RESULT_FONTSIZE < 1
 	? '.sugoi__source {border-bottom: 0}'
 	: ''
 }
 ${
-	settings.LOG_RESULT_FONTSIZE < 1 
+	settings.LOG_RESULT_FONTSIZE < 1
 	? `
 .sugoi__log__message__result, .sugoi__log__message__result::before {
 	display: none
