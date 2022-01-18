@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="sugoi">
+<html class="sugoi" lang="en">
 <head>
 	<!--
 		@author Arzet Ro, 2022 <arzeth0@gmail.com>
@@ -1268,6 +1268,197 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 
+
+function autoResizeScrollableElement (
+	el,
+	{
+		 canShrink = true,
+		 minHeightPx = 0,
+		 maxHeightPx,
+		 minLines,
+		 maxLines,
+	} = {}
+)
+{
+	const FN_NAME = 'autoResizeScrollableElement'
+	if (
+		 typeof minLines !== 'undefined'
+		 && minLines !== null
+		 && Number.isNaN(+minLines)
+	)
+	{
+		 console.warn('%O:: minLines (%O) as a number is NaN', FN_NAME, minLines)
+	}
+	if (
+		 typeof maxLines !== 'undefined'
+		 && maxLines !== null
+		 && Number.isNaN(+maxLines)
+	)
+	{
+		 console.warn('%O:: maxLines (%O) as a number is NaN', FN_NAME, maxLines)
+	}
+	canShrink = (
+		 canShrink === true
+		 ||
+		 // @ts-ignore
+		 canShrink === 1 || canShrink === void 0 || canShrink === null
+	)
+
+	const style = window.getComputedStyle(el)
+	const unpreparedLineHeight = style.getPropertyValue('line-height')
+	if (unpreparedLineHeight === 'normal')
+	{
+		 console.error('%O:: line-height is unset for %O', FN_NAME, el)
+	}
+	const lineHeightPx = (
+		 unpreparedLineHeight === 'normal'
+		 ? 1.15 * parseFloat(style.getPropertyValue('font-size')) // 1.15 is a wrong number
+		 : parseFloat(unpreparedLineHeight)
+	)
+
+	// @ts-ignore
+	minHeightPx = parseFloat(minHeightPx || 0) || 0
+	//minHeight = Math.max(lineHeightPx, parseFloat(style.getPropertyValue('min-height')))
+	// @ts-ignore
+	maxHeightPx = parseFloat(maxHeightPx || 0) || Infinity
+	minLines = (
+		 minLines
+		 ? (
+			  Math.round(+minLines || 0) > 1
+			  ? Math.round(+minLines || 0)
+			  : 1
+		 )
+		 : 1
+	)
+	maxLines = (
+		 maxLines
+		 ? (Math.round(+maxLines || 0) || Infinity)
+		 : Infinity
+	)
+	//console.log('%O:: old ov.x=%O ov.y=%O, ov=%O', FN_NAME, style.getPropertyValue('overflow-x'), style.getPropertyValue('overflow-y'), style.getPropertyValue('overflow'))
+	/*if (overflowY !== 'scroll' && overflowY === 'hidden')
+	{
+		 console.warn('%O:: setting overflow-y to scroll', FN_NAME)
+	}*/
+	if (minLines > maxLines)
+	{
+		 console.warn('%O:: minLines > maxLines, therefore both parameters are ignored', FN_NAME)
+		 minLines = 1
+		 maxLines = Infinity
+	}
+	if (minHeightPx > maxHeightPx)
+	{
+		 console.warn('%O:: minHeightPx > maxHeightPx, therefore both parameters are ignored', FN_NAME)
+		 minHeightPx = 0
+		 maxHeightPx = Infinity
+	}
+	const topBottomBorderWidths = (
+		 parseFloat(style.getPropertyValue('border-top-width'))
+		 + parseFloat(style.getPropertyValue('border-bottom-width'))
+	)
+	let verticalPaddings = 0
+	if (style.getPropertyValue('box-sizing') === 'border-box')
+	{
+		 verticalPaddings += (
+			  parseFloat(style.getPropertyValue('padding-top'))
+			  + parseFloat(style.getPropertyValue('padding-bottom'))
+			  + topBottomBorderWidths
+		 )
+	}
+	else
+	{
+		 console.warn(
+			  '%O:: %O has `box-sizing: content-box`'
+			  + ' which is untested; you should set it to border-box. Continuing anyway.',
+			  FN_NAME, el
+		 )
+	}
+	const oldHeightPx = parseFloat(style.height)
+	if (el.tagName === 'TEXTAREA')
+	{
+		 el.setAttribute('rows', '1')
+		 //el.style.overflowY = 'hidden'
+	}
+	const oldScrollTop  = document.documentElement.scrollTop
+	const oldScrollLeft = document.documentElement.scrollLeft
+	// @ts-ignore
+	const oldScrollbarWidth = el.style.scrollbarWidth
+	el.style.height = ''
+
+	// Even when there is nothing to scroll,
+	// it causes an extra height at the bottom in the content area (tried Firefox 95).
+	// scrollbar-width is present only on Firefox 64+,
+	// other browsers use ::-webkit-scrollbar
+	// @ts-ignore
+	el.style.scrollbarWidth = 'none'
+
+	const maxHeightForMinLines = lineHeightPx * minLines + verticalPaddings // can be float
+	// .scrollHeight is always an integer unfortunately
+	const scrollHeight = el.scrollHeight + topBottomBorderWidths
+	/*console.log(
+		 '%O:: lineHeightPx=%O * minLines=%O + verticalPaddings=%O, el.scrollHeight=%O, scrollHeight=%O',
+		 FN_NAME, lineHeightPx, minLines, verticalPaddings,
+		 el.scrollHeight, scrollHeight
+	)*/
+	const newHeightPx = Math.max(
+		 canShrink === true ? minHeightPx : oldHeightPx,
+		 Math.min(
+			  maxHeightPx,
+			  Math.max(
+					maxHeightForMinLines,
+					Math.min(
+							Math.max(scrollHeight, maxHeightForMinLines)
+						 - Math.min(scrollHeight, maxHeightForMinLines) < 1
+						 ? maxHeightForMinLines
+						 : scrollHeight,
+						 (
+							  maxLines > 0 && maxLines !== Infinity
+							  ? lineHeightPx * maxLines + verticalPaddings
+							  : Infinity
+						 )
+					)
+			  )
+		 )
+	)
+	// @ts-ignore
+	el.style.scrollbarWidth = oldScrollbarWidth
+	if (!Number.isFinite(newHeightPx) || newHeightPx < 0)
+	{
+		 console.error('%O:: BUG:: Invalid return value: `%O`', FN_NAME, newHeightPx)
+		 return
+	}
+	el.style.height = newHeightPx + 'px'
+	document.documentElement.scrollTo(oldScrollLeft, oldScrollTop)
+	//console.log('%O:: height: %O → %O', FN_NAME, oldHeightPx, newHeightPx)
+	/*if (el.tagName === 'TEXTAREA' && el.scrollHeight > newHeightPx)
+	{
+		 el.style.overflowY = 'scroll'
+	}*/
+}
+
+
+
+document.querySelectorAll('textarea').forEach(el => {
+	el.dataset.defaultrows = el.getAttribute('rows') || 3
+	el.__autoresize = () => autoResizeScrollableElement(
+		el,
+		{
+			minLines: el.getAttribute('data-minrows') || el.getAttribute('rows') || el.dataset.defaultrows,
+			maxLines: el.getAttribute('data-maxrows') || el.getAttribute('rows') || Infinity,
+		}
+	)
+})
+document.querySelector('[name="CUSTOM_CSS"]').addEventListener(
+	'input',
+	e => e.currentTarget.__autoresize()
+)
+
+
+
+
+
+
+
 // This works for the Sugoi's Web Frontend
 // But also works with deepl.com/translator, translate.google.com, although you need to paste ALL of the below code into F12→Console (or just Ctrl+Shift+k on Firefox).
 //deeplGoogleStart
@@ -1553,192 +1744,9 @@ console.error('Tried to use the fallback: although connection was successful, th
 }*/
 
 
-function autoResizeScrollableElement (
-	el,
-	{
-		 canShrink = true,
-		 minHeightPx = 0,
-		 maxHeightPx,
-		 minLines,
-		 maxLines,
-	} = {}
-)
-{
-	const FN_NAME = 'autoResizeScrollableElement'
-	if (
-		 typeof minLines !== 'undefined'
-		 && minLines !== null
-		 && Number.isNaN(+minLines)
-	)
-	{
-		 console.warn('%O:: minLines (%O) as a number is NaN', FN_NAME, minLines)
-	}
-	if (
-		 typeof maxLines !== 'undefined'
-		 && maxLines !== null
-		 && Number.isNaN(+maxLines)
-	)
-	{
-		 console.warn('%O:: maxLines (%O) as a number is NaN', FN_NAME, maxLines)
-	}
-	canShrink = (
-		 canShrink === true
-		 ||
-		 // @ts-ignore
-		 canShrink === 1 || canShrink === void 0 || canShrink === null
-	)
-
-	const style = window.getComputedStyle(el)
-	const unpreparedLineHeight = style.getPropertyValue('line-height')
-	if (unpreparedLineHeight === 'normal')
-	{
-		 console.error('%O:: line-height is unset for %O', FN_NAME, el)
-	}
-	const lineHeightPx = (
-		 unpreparedLineHeight === 'normal'
-		 ? 1.15 * parseFloat(style.getPropertyValue('font-size')) // 1.15 is a wrong number
-		 : parseFloat(unpreparedLineHeight)
-	)
-
-	// @ts-ignore
-	minHeightPx = parseFloat(minHeightPx || 0) || 0
-	//minHeight = Math.max(lineHeightPx, parseFloat(style.getPropertyValue('min-height')))
-	// @ts-ignore
-	maxHeightPx = parseFloat(maxHeightPx || 0) || Infinity
-	minLines = (
-		 minLines
-		 ? (
-			  Math.round(+minLines || 0) > 1
-			  ? Math.round(+minLines || 0)
-			  : 1
-		 )
-		 : 1
-	)
-	maxLines = (
-		 maxLines
-		 ? (Math.round(+maxLines || 0) || Infinity)
-		 : Infinity
-	)
-	//console.log('%O:: old ov.x=%O ov.y=%O, ov=%O', FN_NAME, style.getPropertyValue('overflow-x'), style.getPropertyValue('overflow-y'), style.getPropertyValue('overflow'))
-	/*if (overflowY !== 'scroll' && overflowY === 'hidden')
-	{
-		 console.warn('%O:: setting overflow-y to scroll', FN_NAME)
-	}*/
-	if (minLines > maxLines)
-	{
-		 console.warn('%O:: minLines > maxLines, therefore both parameters are ignored', FN_NAME)
-		 minLines = 1
-		 maxLines = Infinity
-	}
-	if (minHeightPx > maxHeightPx)
-	{
-		 console.warn('%O:: minHeightPx > maxHeightPx, therefore both parameters are ignored', FN_NAME)
-		 minHeightPx = 0
-		 maxHeightPx = Infinity
-	}
-	const topBottomBorderWidths = (
-		 parseFloat(style.getPropertyValue('border-top-width'))
-		 + parseFloat(style.getPropertyValue('border-bottom-width'))
-	)
-	let verticalPaddings = 0
-	if (style.getPropertyValue('box-sizing') === 'border-box')
-	{
-		 verticalPaddings += (
-			  parseFloat(style.getPropertyValue('padding-top'))
-			  + parseFloat(style.getPropertyValue('padding-bottom'))
-			  + topBottomBorderWidths
-		 )
-	}
-	else
-	{
-		 console.warn(
-			  '%O:: %O has `box-sizing: content-box`'
-			  + ' which is untested; you should set it to border-box. Continuing anyway.',
-			  FN_NAME, el
-		 )
-	}
-	const oldHeightPx = parseFloat(style.height)
-	if (el.tagName === 'TEXTAREA')
-	{
-		 el.setAttribute('rows', '1')
-		 //el.style.overflowY = 'hidden'
-	}
-	const oldScrollTop  = document.documentElement.scrollTop
-	const oldScrollLeft = document.documentElement.scrollLeft
-	// @ts-ignore
-	const oldScrollbarWidth = el.style.scrollbarWidth
-	el.style.height = ''
-
-	// Even when there is nothing to scroll,
-	// it causes an extra height at the bottom in the content area (tried Firefox 95).
-	// scrollbar-width is present only on Firefox 64+,
-	// other browsers use ::-webkit-scrollbar
-	// @ts-ignore
-	el.style.scrollbarWidth = 'none'
-
-	const maxHeightForMinLines = lineHeightPx * minLines + verticalPaddings // can be float
-	// .scrollHeight is always an integer unfortunately
-	const scrollHeight = el.scrollHeight + topBottomBorderWidths
-	/*console.log(
-		 '%O:: lineHeightPx=%O * minLines=%O + verticalPaddings=%O, el.scrollHeight=%O, scrollHeight=%O',
-		 FN_NAME, lineHeightPx, minLines, verticalPaddings,
-		 el.scrollHeight, scrollHeight
-	)*/
-	const newHeightPx = Math.max(
-		 canShrink === true ? minHeightPx : oldHeightPx,
-		 Math.min(
-			  maxHeightPx,
-			  Math.max(
-					maxHeightForMinLines,
-					Math.min(
-							Math.max(scrollHeight, maxHeightForMinLines)
-						 - Math.min(scrollHeight, maxHeightForMinLines) < 1
-						 ? maxHeightForMinLines
-						 : scrollHeight,
-						 (
-							  maxLines > 0 && maxLines !== Infinity
-							  ? lineHeightPx * maxLines + verticalPaddings
-							  : Infinity
-						 )
-					)
-			  )
-		 )
-	)
-	// @ts-ignore
-	el.style.scrollbarWidth = oldScrollbarWidth
-	if (!Number.isFinite(newHeightPx) || newHeightPx < 0)
-	{
-		 console.error('%O:: BUG:: Invalid return value: `%O`', FN_NAME, newHeightPx)
-		 return
-	}
-	el.style.height = newHeightPx + 'px'
-	document.documentElement.scrollTo(oldScrollLeft, oldScrollTop)
-	//console.log('%O:: height: %O → %O', FN_NAME, oldHeightPx, newHeightPx)
-	/*if (el.tagName === 'TEXTAREA' && el.scrollHeight > newHeightPx)
-	{
-		 el.style.overflowY = 'scroll'
-	}*/
-}
 
 
-
-document.querySelectorAll('textarea').forEach(el => {
-	el.dataset.defaultrows = el.getAttribute('rows') || 3
-	el.__autoresize = () => autoResizeScrollableElement(
-		el,
-		{
-			minLines: el.getAttribute('data-minrows') || el.getAttribute('rows') || el.dataset.defaultrows,
-			maxLines: el.getAttribute('data-maxrows') || el.getAttribute('rows') || Infinity,
-		}
-	)
-})
-document.querySelector('[name="CUSTOM_CSS"]').addEventListener(
-	'input',
-	e => e.currentTarget.__autoresize()
-)
-
-
-window.mutObserver = new MutationObserver(function (mutations) { mutations.forEach((mutation) => {
+window.mutObserver = new MutationObserver(function (mutations) { for (const mutation of mutations) {
 	//console.log('step1')
 	if (!(
 		mutation.target === document.body &&
@@ -1874,7 +1882,7 @@ window.mutObserver = new MutationObserver(function (mutations) { mutations.forEa
 
 
 
-}) })
+} })
 window.mutObserver.observe(document.body, {
 	childList: true, attributes: false
 })
