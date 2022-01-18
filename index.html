@@ -1078,7 +1078,7 @@ const removeTheEarilestLogMessages = (howMany, __chch) => {
 		howMany = Math.min(howMany, fullDbKeys.length)
 		for (let i = 0; i < howMany; i++)
 		{
-			const el = sugoiLog.getElementById(fullDbKeys[i])
+			const el = document.getElementById(fullDbKeys[i])
 			/*console.log('[data-id="'
 				+ fullDbKeys[i]//.slice(0, dbLogKeyPrefixPlusDateLength)
 				+ '"]', el)*/
