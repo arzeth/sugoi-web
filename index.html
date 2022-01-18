@@ -1075,11 +1075,7 @@ const removeTheEarilestLogMessages = (howMany, __chch) => {
 		howMany = Math.min(howMany, fullDbKeys.length)
 		for (let i = 0; i < howMany; i++)
 		{
-			const el = sugoiLog.querySelector(
-				'[data-id="'
-				+ fullDbKeys[i]//.slice(0, dbLogKeyPrefixPlusDateLength)
-				+ '"]'
-			)
+			const el = sugoiLog.getElementById(fullDbKeys[i])
 			/*console.log('[data-id="'
 				+ fullDbKeys[i]//.slice(0, dbLogKeyPrefixPlusDateLength)
 				+ '"]', el)*/
@@ -1088,9 +1084,10 @@ const removeTheEarilestLogMessages = (howMany, __chch) => {
 	}
 	else
 	{
-		const ch = Array.from(__chch || sugoiLog.children).reverse()
+		__chch = __chch || sugoiLog.children // TODO in the future: change to ||=
 		howMany = Math.min(howMany, ch.length) // yes, this line is not present inside removeEarliestRecordsInNonRamCache
-		for (let i = 0; i < howMany; i++)
+		const chLength = ch.length
+		for (let i = chLength - 1; i >= chLength - howMany; i--)
 		{
 			sugoiLog.removeChild(ch[i])
 		}
@@ -1228,7 +1225,7 @@ const addLogMessageToDom = (
 	resultTxt = resultTxt.replace(/ *<unk> */g, ' ')
 	const newLogMsg = document.createElement('DIV')
 	newLogMsg.className = 'sugoi__log__message'
-	newLogMsg.dataset.id = sourceId
+	newLogMsg.id = sourceId
 	{
 		const newLogMsgSource = document.createElement('DIV')
 		newLogMsgSource.className = 'sugoi__log__message__source'
