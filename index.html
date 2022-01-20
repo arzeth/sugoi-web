@@ -423,7 +423,8 @@ You can use this upscaler (quality is better than Magpie) for most VNs:
 <script id="sugoiScript">
 'use strict'
 ;(async (window, document) => {
-if (typeof InstallTrigger !== 'undefined' || /firefox/i.test(navigator.userAgent))
+const isFirefox = typeof InstallTrigger !== 'undefined' || /firefox/i.test(navigator.userAgent)
+if (isFirefox)
 {
 	document.documentElement.classList.add('firefox')
 }
@@ -563,7 +564,6 @@ if (db)
 			await db[type].put(obj)
 			if ((await db[type].where(obj).toArray()).length)
 			{
-				console.log(await db[type].where(obj).toArray())
 				await db[type].where(obj).delete()
 			}
 			else
@@ -1534,9 +1534,16 @@ const getCachedTranslatedTextResult = async (textSource) => {
 	return null
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-	document.querySelector('.sugoi__source').value = '' // Firefox after F5 doesn't empty inputs, etc.
-})
+if (isFirefox)
+{
+	// Firefox doesn't empty inputs/etc. after F5.
+	window.addEventListener('DOMContentLoaded', () => {
+		document.querySelector('.sugoi__source').value = ''
+	})
+	window.addEventListener('load', () => {
+		document.querySelector('.sugoi__source').value = ''
+	})
+}
 
 
 
@@ -1837,6 +1844,11 @@ setInterval(async () => {
 					dbLogKeyPrefix + t,
 					[text.slice(1), '']
 				);
+				db?.l.add({
+					t: t,
+					src: text.slice(1),
+					res: '',
+				})
 			}
 			break
 		}
@@ -1980,6 +1992,7 @@ console.error('Tried to use the fallback: although connection was successful, th
 					const t = Date.now()
 					if (db)
 					{
+						console.log('s1')
 						await Promise.all([
 							/*await */db.c.put({
 								src: textSource,
@@ -1992,6 +2005,7 @@ console.error('Tried to use the fallback: although connection was successful, th
 								res: lastTranslatedTextResult
 							}),
 						])
+						console.log('s2')
 					}
 					else
 					{
