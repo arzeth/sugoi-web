@@ -1321,27 +1321,44 @@ setInterval(() => {
 		document.getElementById('sugoi__fontsizes-css').innerHTML =
 `\
 .sugoi__source {
-	font-size: ${settings.LASTMSG_SOURCE_FONTSIZE}px
-},
+	font-size: ${settings.LASTMSG_SOURCE_FONTSIZE}px;
+	${
+		settings.LASTMSG_SOURCE_FONTSIZE < 1
+		? 'display: none;'
+		: ''
+	}
+}
 .sugoi__result {
-	font-size: ${settings.LASTMSG_RESULT_FONTSIZE}px
+	font-size: ${settings.LASTMSG_RESULT_FONTSIZE}px;
+	${
+		settings.LASTMSG_SOURCE_FONTSIZE < 1
+		? 'padding-top: 10px;'
+		: ''
+	}
+}
+.sugoi__log {
+	${
+		settings.LASTMSG_SOURCE_FONTSIZE < 1
+		? 'margin-top: 10px;'
+		: ''
+	}
 }
 .sugoi__log__message__source {
-	font-size: ${settings.LOG_SOURCE_FONTSIZE}px
+	font-size: ${settings.LOG_SOURCE_FONTSIZE}px;
 }
 .sugoi__log__message__result {
-	font-size: ${settings.LOG_RESULT_FONTSIZE}px
+	font-size: ${settings.LOG_RESULT_FONTSIZE}px;
 }
 ${
 	settings.LASTMSG_RESULT_FONTSIZE < 1
-	? '.sugoi__source {border-bottom: 0}'
+	? '.sugoi__source {border-bottom: 0;}'
 	: ''
 }
 ${
 	settings.LOG_RESULT_FONTSIZE < 1
 	? `
 .sugoi__log__message__result, .sugoi__log__message__result::before {
-	display: none
+	display: none;
 }
 .sugoi__log__message + .sugoi__log__message {
 	margin-top: 9px;
@@ -1992,7 +2009,6 @@ console.error('Tried to use the fallback: although connection was successful, th
 					const t = Date.now()
 					if (db)
 					{
-						console.log('s1')
 						await Promise.all([
 							/*await */db.c.put({
 								src: textSource,
@@ -2005,7 +2021,6 @@ console.error('Tried to use the fallback: although connection was successful, th
 								res: lastTranslatedTextResult
 							}),
 						])
-						console.log('s2')
 					}
 					else
 					{
