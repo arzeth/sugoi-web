@@ -1182,7 +1182,8 @@ const removeEarliestRecordsInNonRamDb = async (type, n) => {
 		if (n !== Infinity) query = query.limit(n)
 		query = await query.toArray()
 		const promises = []
-		for (let i = 0; i < query.length; i++)
+		n = Math.min(n, query.length)
+		for (let i = 0; i < n; i++)
 		{
 			const record = query[i]
 			if (type === 'c') // cache
@@ -1830,13 +1831,18 @@ setInterval(async () => {
 		//deeplGoogle-SugoiStart
 		if (settings.MAX_LOG_SIZE !== 0 && lastTranslatedTextSource)
 		{
-			addLogMessageToDom(
-				(await getSortedLogKeysFromNonRam())
-				.slice(-1)[0]
-				.slice(0, dbLogKeyPrefixPlusDateLength),
-				lastTranslatedTextSource,
-				lastTranslatedTextResult,
-			)
+			try {
+				addLogMessageToDom(
+					(await getSortedLogKeysFromNonRam())
+					.slice(-1)[0]
+					.slice(0, dbLogKeyPrefixPlusDateLength),
+					lastTranslatedTextSource,
+					lastTranslatedTextResult,
+				)
+			} catch (e)
+			{
+				console.error(e)
+			}
 		}
 		document.querySelector('.sugoi__source').value = textSource
 		document.querySelector('.sugoi__source').__autoresize()
@@ -2120,8 +2126,9 @@ window.mutObserver = new MutationObserver(function (mutations) { for (const muta
 	// そしてそれは島全域に適用され、俺が今日から通う_r『_t!250,4,3,みのつき/水乃月学園』も同じのようであった。
 	// こいつは、何か_t!250,3,3,・・・/ヤバい――
 	text = text.replace(/①/g, '♡')
-	text = text.replace(/([一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]|[♪_\\\/<>\u2003-\u2005´*•‧‣%§†‡‰#№¡!！՜¿?？⁈⁉՞;；:：׃⁏'‘‚׳`‛’"״「」「」『』﹁﹂““””„‟（）()【】［］\[\]《》{}｛　｝﹏,，、֊・.।。‖։~〜…‥«»―\-]|^)(?:_r)([一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]|[♪_\\\/<>\u2003-\u2005´*•‧‣%§†‡‰#№¡!！՜¿?？⁈⁉՞;；:：׃⁏'‘‚׳`‛’"״「」「」『』﹁﹂““””„‟（）()【】［］\[\]《》{}｛　｝﹏,，、֊・.।。‖։~〜…‥«»―\-])/ug, '$1$2')
-	text = text.replace(/([一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]|[♪_\\\/<>\u2003-\u2005´*•‧‣%§†‡‰#№¡!！՜¿?？⁈⁉՞;；:：׃⁏'‘‚׳`‛’"״「」「」『』﹁﹂““””„‟（）()【】［］\[\]《》{}｛　｝﹏,，、֊・.।。‖։~〜…‥«»―\-]|^)(?:_t!\d+,\d+,(?:\d+,)?)([一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]|[♪_\\\/<>\u2003-\u2005´*•‧‣%§†‡‰#№¡!！՜¿?？⁈⁉՞;；:：׃⁏'‘‚׳`‛’"״「」「」『』﹁﹂““””„‟（）()【】［］\[\]《》{}｛　｝﹏,，、֊・.।。‖։~〜…‥«»―\-])/ug, '$1$2')
+	/*text = text.replace(/([一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]|[♪_\\\/<>\u2003-\u2005´*•‧‣%§†‡‰#№¡!！՜¿?？⁈⁉՞;；:：׃⁏'‘‚׳`‛’"״「」「」『』﹁﹂““””„‟（）()【】［］\[\]《》{}｛　｝﹏,，、֊・.।。‖։~〜…‥«»―\-]|^)(?:_r)([一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]|[♪_\\\/<>\u2003-\u2005´*•‧‣%§†‡‰#№¡!！՜¿?？⁈⁉՞;；:：׃⁏'‘‚׳`‛’"״「」「」『』﹁﹂““””„‟（）()【】［］\[\]《》{}｛　｝﹏,，、֊・.।。‖։~〜…‥«»―\-])/ug, '$1$2')
+	text = text.replace(/([一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]|[♪_\\\/<>\u2003-\u2005´*•‧‣%§†‡‰#№¡!！՜¿?？⁈⁉՞;；:：׃⁏'‘‚׳`‛’"״「」「」『』﹁﹂““””„‟（）()【】［］\[\]《》{}｛　｝﹏,，、֊・.।。‖։~〜…‥«»―\-]|^)(?:_t!\d+,\d+,(?:\d+,)?)([一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]|[♪_\\\/<>\u2003-\u2005´*•‧‣%§†‡‰#№¡!！՜¿?？⁈⁉՞;；:：׃⁏'‘‚׳`‛’"״「」「」『』﹁﹂““””„‟（）()【】［］\[\]《》{}｛　｝﹏,，、֊・.।。‖։~〜…‥«»―\-])/ug, '$1$2')*/
+	text = text.replace(/_r/g, '')
 	//「あっ……そんなところにも、まだ舐めてないおちんちんが……①_r  うふふっ、美化委員特有の清楚なおまんこで舐め舐めして_rあげますね――」
 	// too long text 「これがオチンチンだったらすっごく気持ちいいと思いません_rかぁ～……？　今ならローションなしでもぐちゅぐちゅで溢_rれ出る蜜壺もサービスしちゃいますよぉ～♪」
 
