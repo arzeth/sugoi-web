@@ -551,6 +551,29 @@ if (db)
 		console.error('^ Note that IndexedDB is not available in Firefox\'s incognito mode')
 		db = void 0
 	})
+	if (db)
+	{
+		const obj = {
+			src: 'test'.repeat(40),
+			t: Number.MAX_SAFE_INTEGER,
+			res: 'test'.repeat(40)
+		}
+		for (const type of ['l', 'c'])
+		{
+			await db[type].put(obj)
+			if ((await db[type].where(obj).toArray()).length)
+			{
+				console.log(await db[type].where(obj).toArray())
+				await db[type].where(obj).delete()
+			}
+			else
+			{
+				console.error('Can\'t write to IndexedDB')
+				db = void 0
+				break
+			}
+		}
+	}
 }
 if (db)
 {
@@ -1175,6 +1198,7 @@ const getSortedLogKeysFromNonRam   = async () => getSortedKeysFromNonRamDb('l')
 const removeEarliestRecordsInNonRamDb = async (type, n) => {
 	console.assert(type === 'c' || type === 'l')
 	console.assert(typeof n === 'number')
+	//console.log('removeEarliestRecordsInNonRamDb(%O, %O)', type, n)
 	const ret = []
 	if (db)
 	{
@@ -1182,8 +1206,7 @@ const removeEarliestRecordsInNonRamDb = async (type, n) => {
 		if (n !== Infinity) query = query.limit(n)
 		query = await query.toArray()
 		const promises = []
-		n = Math.min(n, query.length)
-		for (let i = 0; i < n; i++)
+		for (let i = 0; i < query.length; i++)
 		{
 			const record = query[i]
 			if (type === 'c') // cache
@@ -1420,7 +1443,7 @@ const addLogMessageToDom = (
 					{
 						await db.c.put({
 							src: key.slice(dbCacheKeyPrefixPlusDateLength),
-							t:   key.slice(dbCacheKeyPrefixLength, dbCacheKeyPrefixLength + dateLength),
+							t:   +key.slice(dbCacheKeyPrefixLength, dbCacheKeyPrefixLength + dateLength),
 							res: store[key]
 						})
 						store.removeItem(key)
@@ -1443,7 +1466,7 @@ const addLogMessageToDom = (
 						if (src)
 						{
 							await db.l.put({
-								t: key.slice(dbLogKeyPrefixLength, dbLogKeyPrefixLength + dateLength),
+								t: +key.slice(dbLogKeyPrefixLength, dbLogKeyPrefixLength + dateLength),
 								src,
 								res,
 							})
