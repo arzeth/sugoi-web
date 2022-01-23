@@ -1852,18 +1852,19 @@ setInterval(async () => {
 			for (let j = leastI; i <= greatestI; i++)
 			{
 				const t = Date.now()
+				const text = abc[j].slice(1)
 				addLogMessageToDom(
 					dbLogKeyPrefix + t,
-					text.slice(1),
+					text,
 					'',
 				)
 				nonRamLocalStoreSet(
 					dbLogKeyPrefix + t,
-					[text.slice(1), '']
+					[text, '']
 				);
 				db?.l.add({
 					t: t,
-					src: text.slice(1),
+					src: text,
 					res: '',
 				})
 			}
