@@ -1198,6 +1198,7 @@ const getSortedLogKeysFromNonRam   = async () => getSortedKeysFromNonRamDb('l')
 const removeEarliestRecordsInNonRamDb = async (type, n) => {
 	console.assert(type === 'c' || type === 'l')
 	console.assert(typeof n === 'number')
+	if (n <= 0) return
 	//console.log('removeEarliestRecordsInNonRamDb(%O, %O)', type, n)
 	const ret = []
 	if (db)
@@ -1249,6 +1250,7 @@ document.querySelector('.cleanAllCache-Button').onclick = async () => {
 // __chch can be supplied for microoptimization, see the `else` branch
 const removeTheEarilestLogMessages = async (howMany, __chch) => {
 	if (howMany <= 0) return
+	console.assert(typeof howMany === 'number')
 	//console.log('removeTheEarilestLogMessages(%O)', howMany)
 	//console.trace()
 	if (availableNonRamStorages.length)
@@ -1303,14 +1305,14 @@ let lastSettingsAppiledInTheSetInterval = {}
 
 let intervalLocked = false
 // TODO: don't use setInterval
-setInterval(() => {
+setInterval(async () => {
 	if (intervalLocked) return
 	intervalLocked = true
 	{
 		const ch = sugoiLog.children
 		if (ch.length > settings.MAX_LOG_SIZE)
 		{
-			/*await */removeTheEarilestLogMessages(ch.length - settings.MAX_LOG_SIZE, ch)
+			await removeTheEarilestLogMessages(ch.length - settings.MAX_LOG_SIZE, ch)
 		}
 	}
 
