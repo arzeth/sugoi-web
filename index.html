@@ -167,8 +167,17 @@ If you don't have clipboard-inserter, then get it from here:
 (github: <a target="_blank" href="https://github.com/kmltml/clipboard-inserter">
 	https://github.com/kmltml/clipboard-inserter</a>)
 <br><b>Then EVERY TIME you reload this page, MAKE SURE to click the icon (sometimes two clicks are needed), so that there was green "ON" on the icon.</b>
-<br>At least with Firefox, it seems there's some kind of leak in the above extension, so the extension's CPU usage gradually becomes high despite not doing anything.
+<br>At least with Firefox, it seems there's some kind of leak in the above extension,
+<br>so the extension's CPU usage gradually becomes high despite not doing anything.
 <br>This can be "fixed" by going to the <i>Addons</i> page (about:addons) and <i>Disable</i>&amp;<i>Enable</i> it every 1-2 thousand of CTRL+C/CTRL+V.
+<br>
+<br><b>By default clipboard-inserter has the poll interval of 300ms,
+<br>i.e. it checks the Copy/Paste Clipboard Buffer for updates every <span style="color:#f00">300ms</span>,
+<br>which means a message will be skipped if you press Enter two times very quickly.<br/>
+<br>This number can be changed in the extension's settings. Probably 100 ms is good.
+<br>Also decreasing by 200 ms means that the translation request is sent to Sugoi-Japanese-Translator by 1-199ms earlier.
+<br>The disadvantage is extension's CPU usage increases proportionally:
+<br>On Ryzen 2600, 300 ms is 1.5% CPU core usage (only one CPU thread is used). 100 ms is 4.5%.
 <br>
 <br>
 <h3>How to automatically move text from a VN to CTRL+C/V</h3>
