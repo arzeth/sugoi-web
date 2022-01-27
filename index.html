@@ -309,7 +309,7 @@ You can use this upscaler (quality is better than Magpie) for most VNs:
 		<input type="number" name="DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED" min="20" value=""/>
 	</label>
 	<label>
-		(default=2, min=0, <i>cur=<span data-var="DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE"></span></i>) (for performance reasons useful for skipping already read messages that aren't yet in cache) <b>Drop</b> all pending messages except the newest one unless the queue size is ≤
+		(default=4, min=0, <i>cur=<span data-var="DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE"></span></i>) (for performance reasons useful for skipping already read messages that aren't yet in cache) <b>Drop</b> all pending messages except the newest one unless the queue size is ≤
 		<input type="number" name="DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE" value="" min="0" placeholder=""/>
 	</label>
 	<!--<label> DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE's duplicate?
@@ -321,7 +321,7 @@ You can use this upscaler (quality is better than Magpie) for most VNs:
 		<input type="number" name="MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE" value="" min="0" placeholder=""/>
 	</label>
 	<label>
-		Use the <i>increased</i> min delay after updating the text source when the queue size is over (default=5, min=2, <i>cur=<span data-var="INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE_SHALL_BE_ACTIVATED_WHEN_QUEUE_SIZE_IS_OVER"></span></i>):
+		Use the <i>increased</i> min delay after updating the text source when the queue size is over (default=7, min=2, <i>cur=<span data-var="INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE_SHALL_BE_ACTIVATED_WHEN_QUEUE_SIZE_IS_OVER"></span></i>):
 		<input type="number" name="INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE_SHALL_BE_ACTIVATED_WHEN_QUEUE_SIZE_IS_OVER" value="" min="2" placeholder=""/>
 	</label>
 	<label>
@@ -743,8 +743,8 @@ const settings = {
 	MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE: 300,
 	// if Ctrl'ing through a VN
 	INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE: 1300,
-	INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE_SHALL_BE_ACTIVATED_WHEN_QUEUE_SIZE_IS_OVER: 5,
-	DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE: 2,
+	INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE_SHALL_BE_ACTIVATED_WHEN_QUEUE_SIZE_IS_OVER: 7,
+	DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE: 4,
 	//DROP_MESSAGES_UNLESS_QUEUE_SIZE_IS_LTE duplicate?
 	MAX_LOG_SIZE: 500,
 	MAX_CACHE_SIZE: db ? 200e3 : 1000,
