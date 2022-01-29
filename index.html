@@ -464,19 +464,24 @@ const getTextBetween = (
 	text,
 	a,
 	b,
+	includingAB,
+	//requireBothABToBeFound,
 ) => {
 	console.assert(typeof text === 'string')
+	console.assert(typeof includingAB === 'boolean')
+	//console.assert(typeof requireBothABToBeFound === 'boolean')
 
 	const aIdx = text.indexOf(a)
 	if (aIdx !== -1)
 	{
-		text = text.slice(aIdx + a.length)
+		text = text.slice(includingAB ? aIdx : aIdx + a.length)
 	}
+	//else if (requireBothABToBeFound === true) return null
 
 	const bIdx = text.indexOf(b)
 	if (bIdx !== -1)
 	{
-		text = text.slice(0, bIdx)
+		text = text.slice(0, includingAB ? bIdx + b.length : bIdx)
 	}
 
 	return text
@@ -487,21 +492,26 @@ const getTextBetween = (
 	const btn = document.querySelector('.getCodeForDeeplAndOthers')
 	const btnOrigText = btn.innerHTML
 	btn.onclick = async () => {
-		const txt = getTextBetween(
+		let txt = getTextBetween(
 			document.getElementById('sugoiScript').innerHTML,
 			'//deeplGoogleStart\n',
 			'//deeplGoogleEnd',
+			false,
 		)
-		await navigator.clipboard.writeText(
-			txt.replace(
+		while (txt.includes('//deeplGoogle-SugoiStart\n'))
+		{
+			console.log('@')
+			txt = txt.replace(
 				getTextBetween(
 					txt,
 					'//deeplGoogle-SugoiStart\n',
 					'//deeplGoogle-SugoiEnd',
+					true,
 				),
-				''
+				'',
 			)
-		)
+		}
+		await navigator.clipboard.writeText(txt)
 		btn.innerHTML = 'Copied!'
 		await wait(700)
 		btn.innerHTML = btnOrigText
@@ -1165,6 +1175,14 @@ const getSortedKeysFromNonRamDb = async (type) => {
 			: []
 		)
 	]*/
+	/*if (type === 'l')
+	{
+		console.error(await
+			db[type]
+			.orderBy('t')
+			.toArray()
+			)
+	}*/
 	const ret = (
 		db
 		?
@@ -1208,7 +1226,7 @@ const removeEarliestRecordsInNonRamDb = async (type, n) => {
 	console.assert(type === 'c' || type === 'l')
 	console.assert(typeof n === 'number')
 	if (n <= 0) return
-	//console.log('removeEarliestRecordsInNonRamDb(%O, %O)', type, n)
+	//if (type === 'l')console.warn('removeEarliestRecordsInNonRamDb(%O, %O)', type, n)
 	const ret = []
 	if (db)
 	{
@@ -1257,10 +1275,10 @@ document.querySelector('.cleanAllCache-Button').onclick = async () => {
 
 
 // __chch can be supplied for microoptimization, see the `else` branch
-const removeTheEarilestLogMessages = async (howMany, __chch) => {
+const removeEarilestLogMessages = async (howMany, __chch) => {
 	if (howMany <= 0) return
 	console.assert(typeof howMany === 'number')
-	//console.log('removeTheEarilestLogMessages(%O)', howMany)
+	//console.log('removeEarilestLogMessages(%O)', howMany)
 	//console.trace()
 	if (availableNonRamStorages.length)
 	{
@@ -1288,7 +1306,7 @@ const removeTheEarilestLogMessages = async (howMany, __chch) => {
 	recountLogKeys()
 }
 document.querySelector('.cleanAllLog-Button').onclick = () => {
-	/*await */removeTheEarilestLogMessages(Infinity)
+	/*await */removeEarilestLogMessages(Infinity)
 }
 document.querySelector('.cleanAllLogExcept-Button').onclick = () => {
 	const n = parseInt(document.querySelector('.cleanAllLogExcept-N').value, 10)
@@ -1303,7 +1321,7 @@ document.querySelector('.cleanAllLogExcept-Button').onclick = () => {
 		return
 	}
 	const ch = sugoiLog.children
-	/*await */removeTheEarilestLogMessages(ch.length - n)
+	/*await */removeEarilestLogMessages(ch.length - n)
 }
 
 
@@ -1319,9 +1337,10 @@ setInterval(async () => {
 	intervalLocked = true
 	{
 		const ch = sugoiLog.children
-		if (ch.length > settings.MAX_LOG_SIZE)
+		//console.log(ch.length + 1, settings.MAX_LOG_SIZE)
+		if (ch.length + 1 > settings.MAX_LOG_SIZE)
 		{
-			await removeTheEarilestLogMessages(ch.length - settings.MAX_LOG_SIZE, ch)
+			await removeEarilestLogMessages(ch.length + 1 - settings.MAX_LOG_SIZE, ch)
 		}
 	}
 
@@ -1429,6 +1448,7 @@ const addLogMessageToDom = (
 	resultTxt,
 ) => {
 	if (!settings.MAX_LOG_SIZE) return
+	//console.warn('addLogMessageToDom(%O)', sourceTxt)
 	console.assert(typeof sourceId === 'string')
 	console.assert(typeof sourceTxt === 'string')
 	console.assert(typeof resultTxt === 'string')
@@ -1845,44 +1865,52 @@ setInterval(async () => {
 	// .splice(0) empties an array but returns what was there
 	const abc = (
 		queue.length <= settings.DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE
+		|| typeof SUGOI === 'undefined'
 		? queue.splice(0, Math.max(1, queue.length - settings.DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE))
 		: queue.splice(0)
 	)
-	let leastI = -1
-	let greatestI = -1
-	for (let i = abc.length - 2; i >= 0; i--)
+	//deeplGoogle-SugoiStart
+	if (typeof SUGOI !== 'undefined')
 	{
-		if (abc[i][0] === ' ')
+		let leastI = -1
+		let greatestI = -1
+		for (let i = abc.length - 2; i >= 0; i--)
 		{
-			leastI = i
-			if (greatestI === -1) greatestI = i
-		}
-		else
-		{
-			if (leastI === -1) break
-			for (let j = leastI; i <= greatestI; i++)
+			if (abc[i][0] === ' ')
 			{
-				const t = Date.now()
-				const text = abc[j].slice(1)
-				addLogMessageToDom(
-					dbLogKeyPrefix + t,
-					text,
-					'',
-				)
-				nonRamLocalStoreSet(
-					dbLogKeyPrefix + t,
-					[text, '']
-				);
-				db?.l.add({
-					t: t,
-					src: text,
-					res: '',
-				})
+				leastI = i
+				if (greatestI === -1) greatestI = i
 			}
-			break
+			else
+			{
+				if (leastI === -1) break
+				for (let j = leastI; i <= greatestI; i++)
+				{
+					const t = Date.now()
+					const text = abc[j].slice(1)
+					addLogMessageToDom(
+						dbLogKeyPrefix + t,
+						text,
+						'',
+					)
+					nonRamLocalStoreSet(
+						dbLogKeyPrefix + t,
+						[text, '']
+					);
+					//console.log('db.l add `%O`', src)
+					db?.l.add({
+						t: t,
+						src: text,
+						res: '',
+					})
+				}
+				break
+			}
 		}
 	}
-	const textSource = abc[abc.length - 1]
+	//deeplGoogle-SugoiEnd
+	const startsWithSpace = abc[abc.length - 1]?.[0] === ' '
+	const textSource = startsWithSpace ? abc[abc.length - 1].trim() : abc[abc.length - 1]
 	abc.length = 0 // free RAM
 	if (!textSource)
 	{
@@ -1910,26 +1938,55 @@ setInterval(async () => {
 		}
 		document.querySelector('.sugoi__source').value = textSource
 		document.querySelector('.sugoi__source').__autoresize()
-		if (settings.MAX_CACHE_SIZE !== 0)
+		if (settings.MAX_CACHE_SIZE !== 0 || startsWithSpace)
 		{
-			if (cacheInRam.has(textSource))
+			let found = false
+			if (startsWithSpace === true)
 			{
 				lastTranslatedTextSource = textSource
-				document.querySelector('.sugoi__result').innerHTML = lastTranslatedTextResult = cacheInRam.get(textSource)
-				locked = false
-				return
+				lastTranslatedTextResult = ''
+				found = true
 			}
-			if (availableNonRamStorages.length)
+			else if (cacheInRam.has(textSource))
+			{
+				lastTranslatedTextSource = textSource
+				lastTranslatedTextResult = cacheInRam.get(textSource)
+				found = true
+			}
+			else if (availableNonRamStorages.length)//should be >0 if IndexedDB is present, right?
 			{
 				const resultFromCache = await getCachedTranslatedTextResult(textSource)
 				if (typeof resultFromCache === 'string')
 				{
 					lastTranslatedTextSource = textSource
-					document.querySelector('.sugoi__result').innerHTML = lastTranslatedTextResult = resultFromCache
-					locked = false
-					//alert('used cache')
-					return
+					lastTranslatedTextResult = resultFromCache
+					found = true
 				}
+			}
+			if (found === true)
+			{
+				document.querySelector('.sugoi__result').innerHTML = lastTranslatedTextResult
+
+				const t = Date.now()
+				if (db)
+				{
+					//console.log('3 db.l add `%O`', textSource)
+					await db.l.add({
+						t: t,
+						src: lastTranslatedTextSource,
+						res: lastTranslatedTextResult,
+					})
+				}
+				else
+				{
+					nonRamLocalStoreSet(
+						dbLogKeyPrefix + t,
+						[lastTranslatedTextSource, lastTranslatedTextResult]
+					)
+				}
+
+				locked = false
+				return
 			}
 		}
 		document.querySelector('.sugoi__result').innerHTML = '... ... ... ... ... ... ... ... ... ...'
@@ -2014,13 +2071,14 @@ console.error('Tried to use the fallback: although connection was successful, th
 				lastTranslatedTextSource = textSource
 				if (settings.MAX_CACHE_SIZE !== 0)
 				{
-					if (Math.random() < 0.1 && await getRecordsCountInNonRamCache() === settings.MAX_CACHE_SIZE)
+					if (Math.random() < 0.05 && await getRecordsCountInNonRamCache() === settings.MAX_CACHE_SIZE)
 					{
 						await removeEarliestRecordsInNonRamDb('c', 1)
 					}
 					const t = Date.now()
 					if (db)
 					{
+						//console.log('2 db.l add `%O`', textSource)
 						await Promise.all([
 							/*await */db.c.put({
 								src: textSource,
@@ -2305,6 +2363,8 @@ if (document.querySelector('#dl_translator'))
 	document.querySelector('.lmt--web').style.paddingTop = '0'
 	document.querySelector('#dl_translator').style.paddingLeft = '0'
 	document.querySelector('#dl_translator').style.paddingRight = '0'
+	document.querySelector('#dl_translator').style.marginLeft = '0'
+	document.querySelector('#dl_translator').style.marginRight = '0'
 	document.querySelector('header.dl_header').parentNode.removeChild(document.querySelector('header.dl_header'))
 
 	Array.from(document.querySelectorAll('.lmt__textarea_container'))
@@ -2338,7 +2398,7 @@ if (document.querySelector('#dl_translator'))
 
 	Array.from(document.querySelectorAll('.lmt__textarea_separator'))
 	.forEach(x => x.setAttribute('style', 'margin-top: 0 !important; margin: 0 important;'))
-	Array.from(document.querySelectorAll('.lmt__language_container, .lmt__source_toolbar, .lmt__target_toolbar, .lmt__docTrans-tab-container, #dl_quotes_container, .dl_footer, .lmt__dict__empty_state, .eSEOtericText, #source-dummydiv'))
+	Array.from(document.querySelectorAll('.lmt__language_container, .lmt__source_toolbar, .lmt__target_toolbar, .lmt__docTrans-tab-container, #dl_quotes_container, .dl_footer, .lmt__dict__empty_state, .eSEOtericText, #source-dummydiv, [class^="dl_footer"]'))
 	.forEach(x => x.setAttribute('style', 'display: none;'))
 	document.querySelector('.lmt__sides_container').style.flexDirection = 'column'
 	Array.from(document.querySelectorAll('.lmt__side_container')).forEach(x => x.style.width = '100vw')
