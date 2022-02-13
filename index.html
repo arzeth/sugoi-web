@@ -147,7 +147,7 @@
 <br>by clipboard-inserter extension.
 <br>When you insert, interface will change: zen mode will be activated (invisible scrollbar for windows with ≤599px width, no README, etc.).
 <br>Settings are at the bottom of the page.
-<br>The source code of this page was <a href="https://github.com/arzeth/sugoi-web/commits/main" target="blank">last updated</a> at 2022-02-13T22:31:50+00:00
+<br>The source code of this page was <a href="https://github.com/arzeth/sugoi-web/commits/main" target="blank">last updated</a> at 2022-02-13T21:52:00+00:00
 </b></i>
 <br>
 <h3>How to automatically move text from CTRL+C/V to here:</h3>
@@ -1998,11 +1998,11 @@ setInterval(async () => {
 			{
 				//console.log('2 db.l add `%O`', textSource)
 				await Promise.all([
-					db.c.delete(textSource),
+					res ? db.c.delete(textSource) : Promise.resolve(),
 					db.l.delete(t),
 				])
 				await Promise.all([
-					settings.MAX_CACHE_SIZE === 0 || settings.TRANSLATE === TRANSLATE_NOTHING
+					settings.MAX_CACHE_SIZE === 0 || !res
 					? Promise.resolve ()
 					: /*await */db.c.put({
 						src: textSource,
@@ -2022,7 +2022,7 @@ setInterval(async () => {
 				if (
 					settings.MAX_CACHE_SIZE !== 0
 					&&
-					settings.TRANSLATE === TRANSLATE_NOTHING
+					res
 				)
 				{
 					nonRamLocalStoreSet(
