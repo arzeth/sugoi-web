@@ -161,15 +161,16 @@ If you don't have clipboard-inserter, then get it from here:
 <!-- <div class="chromeOnlyLink"> -->
 	<a target="_blank" href="https://chrome.google.com/webstore/detail/clipboard-inserter/deahejllghicakhplliloeheabddjajm">
 		https://chrome.google.com/webstore/detail/clipboard-inserter/deahejllghicakhplliloeheabddjajm
-	</a> (doesn't work locally)
+	</a> (<span style="color:#f00">doesn't work locally, i.e. file:///</span>)
 <!-- </div> -->
 <br>
 (github: <a target="_blank" href="https://github.com/kmltml/clipboard-inserter">
 	https://github.com/kmltml/clipboard-inserter</a>)
 <br><b>Then EVERY TIME you reload this page, MAKE SURE to click the icon (sometimes two clicks are needed), so that there was green "ON" on the icon.</b>
-<br>At least with Firefox, it seems there's some kind of leak in the above extension,
+<br>With both Firefox and Chrome, it seems there's some kind of bug in the above extension,
 <br>so the extension's CPU usage gradually becomes high despite not doing anything.
 <br>This can be "fixed" by going to the <i>Addons</i> page (about:addons) and <i>Disable</i>&amp;<i>Enable</i> it every 1-2 thousand of CTRL+C/CTRL+V.
+<br>Also the extension has a memory leak that can be fixed by clicking on the icon (on, off).
 <br>
 <br><b>By default clipboard-inserter has the poll interval of 300ms,
 <br>i.e. it checks the Copy/Paste Clipboard Buffer for updates every <span style="color:#f00">300ms</span>,
@@ -206,7 +207,7 @@ https://addons.mozilla.org/firefox/addon/10ten-ja-reader/
 <br>It has many settings, you can even enable romaji (i.e. latin script).
 <br>If you've installed this extension just now, then refresh this page.
 <br>
-<br>It also shows tones unlike Rikaikun. In short: when there is a line above a character, then use high tone, else low tone; tone ≈ relative volume.
+<br>It also shows tones unlike Rikaikun. In short: when there is a line above a character, then use high tone, else low tone. If you have difficulties with using tones, then use a low/high volume instead of low/high tone <i>for now</i>.
 <br>
 <h3>Notes</h3>
 Names in most cases are translated wrong (because there are multiple readings) or sometimes they become nouns, e.g. "Sora" might become "sky".
@@ -358,6 +359,14 @@ You can use this upscaler (quality is better than Magpie) for most VNs:
 		<input checked type="checkbox" name="DEDUPLICATE"/>
 	</label>
 	<label>
+		(default=option #3, <i>cur=option #<span data-var="TRANSLATE"></span></i>) Translate
+		<select name="TRANSLATE" size="3">
+			<option value="1">Never</option>
+			<option value="2">(BUGGY) Only when you click on an English text</option>
+			<option value="3">Everything automatically</option>
+		</select>
+	</label>
+	<label>
 		(default=option #2, <i>cur=option #<span data-var="NONJAP_INTO_LOG"></span></i>) Show & save messages without Japanese symbols in the log.
 		<select name="NONJAP_INTO_LOG" size="3">
 			<option value="1">Don't</option>
@@ -500,7 +509,7 @@ const getTextBetween = (
 		)
 		while (txt.includes('//deeplGoogle-SugoiStart\n'))
 		{
-			console.log('@')
+			//console.log('@')
 			txt = txt.replace(
 				getTextBetween(
 					txt,
@@ -770,6 +779,7 @@ const settings = {
 	IS_LOG_MULTISESSION: 1,
 	IS_CACHE_MULTISESSION: 1,
 	DEDUPLICATE: 1,
+	TRANSLATE: 3, // 1 = never translate, 2 = translate on click, 3 = translate all
 	NONJAP_INTO_LOG: 2,
 	BACKEND_URL: 'http://localhost:14366/',
 	SHOW_README: 1,
@@ -1027,7 +1037,7 @@ sugoiSettingsForm.onsubmit = function (e) {
 						{
 							return true
 						}
-						if (k === 'NONJAP_INTO_LOG')
+						if (k === 'NONJAP_INTO_LOG' || k === 'TRANSLATE')
 						{
 							v = +v
 							return true
@@ -1441,6 +1451,9 @@ ${
 	intervalLocked = false
 }, 500)
 
+const TRANSLATE_NOTHING = 1
+const TRANSLATE_ONCLICK = 2
+const TRANSLATE_EVERYTHING = 3
 
 const addLogMessageToDom = (
 	sourceId,
@@ -1460,23 +1473,31 @@ const addLogMessageToDom = (
 	const newLogMsg = document.createElement('DIV')
 	newLogMsg.className = 'sugoi__log__message'
 	newLogMsg.id = sourceId
+	const newLogMsgSource = document.createElement('DIV')
 	{
-		const newLogMsgSource = document.createElement('DIV')
 		newLogMsgSource.className = 'sugoi__log__message__source'
 		newLogMsgSource.setAttribute('lang', 'jp')
 		newLogMsgSource.textContent = sourceTxt
 		newLogMsg.appendChild(newLogMsgSource)
 	}
+	let newLogMsgResult
 	if (resultTxt) // it might be empty if settings.NONJAP_INTO_LOG > 1
 	{
-		const newLogMsgResult = document.createElement('DIV')
+		newLogMsgResult = document.createElement('DIV')
 		newLogMsgResult.className = 'sugoi__log__message__result'
 		newLogMsgResult.setAttribute('lang', 'en')
 		newLogMsgResult.textContent = resultTxt
 		newLogMsg.appendChild(newLogMsgResult)
 	}
 	sugoiLog.prepend(newLogMsg)
+
+	return {
+		msg: newLogMsg,
+		src: newLogMsgSource,
+		res: newLogMsgResult,
+	}
 }
+
 
 ;(async () => {
 	if (db)
@@ -1540,7 +1561,9 @@ const addLogMessageToDom = (
 				dbLogKeyPrefix + record.t,
 				record.src,
 				record.res
-			)
+			).src.onclick = () => {
+				if (settings.TRANSLATE !== TRANSLATE_ONCLICK) return
+			}
 		})
 	}
 	else
@@ -1582,14 +1605,17 @@ const getCachedTranslatedTextResult = async (textSource) => {
 	return null
 }
 
+const sugoiLatestSourceEl = document.querySelector('.sugoi__source')
+const sugoiLatestResultEl = document.querySelector('.sugoi__result')
+
 if (isFirefox)
 {
 	// Firefox doesn't empty inputs/etc. after F5.
 	window.addEventListener('DOMContentLoaded', () => {
-		document.querySelector('.sugoi__source').value = ''
+		sugoiLatestSourceEl.value = ''
 	})
 	window.addEventListener('load', () => {
-		document.querySelector('.sugoi__source').value = ''
+		sugoiLatestSourceEl.value = ''
 	})
 }
 
@@ -1848,11 +1874,16 @@ if (typeof settings === 'undefined') // that means it's DeepL or Google Translat
 		INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE_SHALL_BE_ACTIVATED_WHEN_QUEUE_SIZE_IS_OVER: 5,
 		DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE: 2,
 		DEDUPLICATE: 1,
+		TRANSLATE: TRANSLATE_EVERYTHING,
 	}
 }
 
 setInterval(async () => {
-	if (locked === true) return
+	if (locked === true)
+	{
+		//console.log('locked')
+		return
+	}
 	locked = true
 	if (queue.length >= settings.INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE_SHALL_BE_ACTIVATED_WHEN_QUEUE_SIZE_IS_OVER)
 	{
@@ -1869,42 +1900,52 @@ setInterval(async () => {
 		? queue.splice(0, Math.max(1, queue.length - settings.DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE))
 		: queue.splice(0)
 	)
+	if (abc.length === 0)
+	{
+		locked = false
+		return
+	}
 	//deeplGoogle-SugoiStart
 	if (typeof SUGOI !== 'undefined')
 	{
-		let leastI = -1
-		let greatestI = -1
-		for (let i = abc.length - 2; i >= 0; i--)
+		if (settings.TRANSLATE === TRANSLATE_EVERYTHING)
 		{
-			if (abc[i][0] === ' ')
+			// add messages to the log without translating them
+			let leastI = -1
+			let greatestI = -1
+			for (let i = abc.length - 2; i >= 0; i--)
 			{
-				leastI = i
-				if (greatestI === -1) greatestI = i
-			}
-			else
-			{
-				if (leastI === -1) break
-				for (let j = leastI; i <= greatestI; i++)
+				if (abc[i][0] === ' ') // if the first symbol is a space, then that means there are no Japanese symbols
 				{
-					const t = Date.now()
-					const text = abc[j].slice(1)
-					addLogMessageToDom(
-						dbLogKeyPrefix + t,
-						text,
-						'',
-					)
-					nonRamLocalStoreSet(
-						dbLogKeyPrefix + t,
-						[text, '']
-					);
-					//console.log('db.l add `%O`', src)
-					db?.l.add({
-						t: t,
-						src: text,
-						res: '',
-					})
+					//console.log('@')
+					leastI = i
+					if (greatestI === -1) greatestI = i
 				}
-				break
+				else
+				{
+					if (leastI === -1) break
+					for (let j = leastI; i <= greatestI; i++)
+					{
+						const t = Date.now()
+						const text = abc[j].slice(1)
+						addLogMessageToDom(
+							dbLogKeyPrefix + t,
+							text,
+							'',
+						)
+						nonRamLocalStoreSet(
+							dbLogKeyPrefix + t,
+							[text, '']
+						);
+						//console.log('db.l add `%O`', src)
+						db?.l.add({
+							t: t,
+							src: text,
+							res: '',
+						})
+					}
+					break
+				}
 			}
 		}
 	}
@@ -1912,8 +1953,10 @@ setInterval(async () => {
 	const startsWithSpace = abc[abc.length - 1]?.[0] === ' '
 	const textSource = startsWithSpace ? abc[abc.length - 1].trim() : abc[abc.length - 1]
 	abc.length = 0 // free RAM
-	if (!textSource)
+	//console.log('req')
+	if (!textSource/* || textSource === lastTranslatedTextSource*/)
 	{
+		//console.log('re')
 		locked = false
 		return
 	}
@@ -1921,10 +1964,16 @@ setInterval(async () => {
 	if (typeof SUGOI !== 'undefined')
 	{
 		//deeplGoogle-SugoiStart
-		if (settings.MAX_LOG_SIZE !== 0 && lastTranslatedTextSource)
+		let prevLogMsg = void 0
+		if (
+			settings.MAX_LOG_SIZE !== 0
+			&&
+			lastTranslatedTextSource
+		)
 		{
 			try {
-				addLogMessageToDom(
+				//console.log('adding!')
+				prevLogMsg = addLogMessageToDom(
 					(await getSortedLogKeysFromNonRam())
 					.slice(-1)[0]
 					.slice(0, dbLogKeyPrefixPlusDateLength),
@@ -1936,193 +1985,297 @@ setInterval(async () => {
 				console.error(e)
 			}
 		}
-		document.querySelector('.sugoi__source').value = textSource
-		document.querySelector('.sugoi__source').__autoresize()
-		if (settings.MAX_CACHE_SIZE !== 0 || startsWithSpace)
-		{
-			let found = false
-			if (startsWithSpace === true)
-			{
-				lastTranslatedTextSource = textSource
-				lastTranslatedTextResult = ''
-				found = true
-			}
-			else if (cacheInRam.has(textSource))
-			{
-				lastTranslatedTextSource = textSource
-				lastTranslatedTextResult = cacheInRam.get(textSource)
-				found = true
-			}
-			else if (availableNonRamStorages.length)//should be >0 if IndexedDB is present, right?
-			{
-				const resultFromCache = await getCachedTranslatedTextResult(textSource)
-				if (typeof resultFromCache === 'string')
-				{
-					lastTranslatedTextSource = textSource
-					lastTranslatedTextResult = resultFromCache
-					found = true
-				}
-			}
-			if (found === true)
-			{
-				document.querySelector('.sugoi__result').innerHTML = lastTranslatedTextResult
+		sugoiLatestSourceEl.value = textSource
+		sugoiLatestSourceEl.onclick = null
+		sugoiLatestSourceEl.__autoresize()
+		sugoiLatestResultEl.innerHTML = ''
 
-				const t = Date.now()
-				if (db)
-				{
-					//console.log('3 db.l add `%O`', textSource)
-					await db.l.add({
+		const t = Date.now()
+		const retryIn = 1000
+		const cl = async (res, isItTheLatest) => {
+			if (db)
+			{
+				//console.log('2 db.l add `%O`', textSource)
+				await Promise.all([
+					db.c.delete(textSource),
+					db.l.delete(t),
+				])
+				await Promise.all([
+					settings.MAX_CACHE_SIZE === 0 || settings.TRANSLATE === TRANSLATE_NOTHING
+					? Promise.resolve ()
+					: /*await */db.c.put({
+						src: textSource,
 						t: t,
-						src: lastTranslatedTextSource,
-						res: lastTranslatedTextResult,
-					})
+						res,
+					}),
+
+					isItTheLatest ? /*await */db.l.put({
+						t: t,
+						src: textSource,
+						res,
+					}) : Promise.resolve(),
+				])
+			}
+			else
+			{
+				if (
+					settings.MAX_CACHE_SIZE !== 0
+					&&
+					settings.TRANSLATE === TRANSLATE_NOTHING
+				)
+				{
+					nonRamLocalStoreSet(
+						dbCacheKeyPrefix + t + YYY
+						+ textSource,
+						res
+					)
 				}
-				else
+				if (isItTheLatest)
 				{
 					nonRamLocalStoreSet(
 						dbLogKeyPrefix + t,
-						[lastTranslatedTextSource, lastTranslatedTextResult]
+						[textSource, res]
 					)
 				}
-
-				locked = false
-				return
 			}
 		}
-		document.querySelector('.sugoi__result').innerHTML = '... ... ... ... ... ... ... ... ... ...'
-		const retryIn = 1000
-		let temporailyDisallowBreak = false
-		for (;;)
+		if (settings.TRANSLATE === TRANSLATE_NOTHING)
 		{
-			if (await new Promise(resolve => fetch(settings.BACKEND_URL, {
-				method: 'POST',
-				...(
-					settings.BACKEND_URL.includes('/translate')
-					? {}
-					: {headers: {'Content-Type': 'application/json'}}
-				),
-				body: settings.BACKEND_URL.includes('/translate') ? textSource : JSON.stringify({
-					message: 'translate sentences',
-					content: textSource
-				})
-			})
-			.catch(async (err) => {
-				if (!settings.BACKEND_URL.includes('/translate'))
+			cl('', true)
+			lastTranslatedTextSource = textSource
+			lastTranslatedTextResult = ''
+			locked = false
+			return
+		}
+		const fn = async (textSource, errorEl, textResultEl, kerpa) => {
+			const isItTheLatest = textResultEl === sugoiLatestResultEl
+			//console.log('isItTheLatest=%O', isItTheLatest)
+			if (
+				settings.TRANSLATE === TRANSLATE_EVERYTHING 
+				&& 
+				(settings.MAX_CACHE_SIZE !== 0 || startsWithSpace)
+			)
+			{
+				let found = false
+				let src, res
+				if (startsWithSpace === true)
 				{
-					const newBackendUrl = settings.BACKEND_URL.replace(/\/+$/, '') + '/translate'
-					if (await new Promise(resolve => {
-						fetch(newBackendUrl, {
-							method: 'POST',
-							//headers: {'Content-Type': 'application/json'},
-							body: textSource
-						})
-						.catch(e => resolve(false))
-						.then(async (res) => {
-							try
-							{
-								await res.json()
-								console.log(
-'Switching the backend URL from %s to %s without updating/saving settings because the one without /translate didn\'t work',
-									settings.BACKEND_URL, newBackendUrl
-								)
-								// we don't save it into localStorage just in case
-								settings.BACKEND_URL = newBackendUrl
-								temporailyDisallowBreak = true
-								resolve(true)
-							}
-							catch (e)
-							{
-console.error('Tried to use the fallback: although connection was successful, the server returned an incorrect JSON message')
-								resolve(false)
-							}
-						})
-					}))
+					src = textSource
+					if (isItTheLatest) lastTranslatedTextSource = src
+					res = ''
+					if (isItTheLatest) lastTranslatedTextResult = res
+					found = true
+				}
+				else if (cacheInRam.has(textSource))
+				{
+					src = textSource
+					if (isItTheLatest) lastTranslatedTextSource = src
+					res = cacheInRam.get(textSource)
+					if (isItTheLatest) lastTranslatedTextResult = res
+					found = true
+				}
+				else if (availableNonRamStorages.length)//should be >0 if IndexedDB is present, right?
+				{
+					const resultFromCache = await getCachedTranslatedTextResult(textSource)
+					if (typeof resultFromCache === 'string')
 					{
-						resolve(true)
-						return
+						src = textSource
+						if (isItTheLatest) lastTranslatedTextSource = src
+						res = resultFromCache
+						if (isItTheLatest) lastTranslatedTextResult = res
+						found = true
 					}
 				}
-				document.querySelector('.theerror').innerHTML = 'Error: ' + err.message + `. Retrying in ${retryIn}ms.`
-				console.error(err.message)
-				await wait(retryIn)
-				resolve(false)
-			})
-			.then(async (res) => {
-				if (!res)
+				if (found === true)
 				{
-					document.querySelector('.theerror').innerHTML = `Error: Could not connect to Sugoi-Japanese-Translator. Retrying in ${retryIn}ms.`
-					await wait(retryIn)
-					resolve(false)
-					return
-				}
-				try
-				{
-					lastTranslatedTextResult = (await res.json()).trim() // it sends us a JSON string
-				}
-				catch (e)
-				{
-					document.querySelector('.theerror').innerHTML = `Error: Response from Sugoi-Japanese-Translator is not valid JSON, see the browser console. Retrying in ${retryIn}ms.`
-					console.error(e.message)
-					await wait(retryIn)
-					resolve(false)
-					return
-				}
-				document.querySelector('.theerror').innerHTML = ''
-				lastTranslatedTextSource = textSource
-				if (settings.MAX_CACHE_SIZE !== 0)
-				{
-					if (Math.random() < 0.05 && await getRecordsCountInNonRamCache() === settings.MAX_CACHE_SIZE)
-					{
-						await removeEarliestRecordsInNonRamDb('c', 1)
-					}
-					const t = Date.now()
+					textResultEl.innerHTML = res
+
 					if (db)
 					{
-						//console.log('2 db.l add `%O`', textSource)
-						await Promise.all([
-							/*await */db.c.put({
-								src: textSource,
-								t: t,
-								res: lastTranslatedTextResult
-							}),
-							/*await */db.l.add({
-								t: t,
-								src: textSource,
-								res: lastTranslatedTextResult
-							}),
-						])
+						//console.log('3 db.l add `%O`', textSource)
+						await db.l.delete(t)
+						await db.l.add({
+							t: t,
+							src: src,
+							res: res,
+						})
 					}
 					else
 					{
 						nonRamLocalStoreSet(
-							dbCacheKeyPrefix + t + YYY
-							+ textSource,
-							lastTranslatedTextResult
-						)
-						nonRamLocalStoreSet(
 							dbLogKeyPrefix + t,
-							[textSource, lastTranslatedTextResult]
+							[src, res]
 						)
 					}
 
-					// also store everything in RAM
-					// because localStorage has limit of 5MB per domain.
-					cacheInRam.set(textSource, lastTranslatedTextResult)
-				}
-				document.querySelector('.sugoi__result').innerHTML = lastTranslatedTextResult
-				resolve(true)
-			})))
-			{
-				if (temporailyDisallowBreak)
-				{
-					temporailyDisallowBreak = false
-				}
-				else
-				{
+					//console.log('byebye')
 					locked = false
-					break
+					return
 				}
 			}
+			if (!kerpa && settings.TRANSLATE !== TRANSLATE_EVERYTHING)
+			{
+				//console.log('kerpa end')
+				textResultEl.innerHTML = ''
+				locked = false
+				return
+			}
+
+
+			textResultEl.innerHTML = '... ... ... ... ... ... ... ... ... ...'
+			let temporailyDisallowBreak = false
+			for (;;)
+			{
+				if (await new Promise(resolve => fetch(settings.BACKEND_URL, {
+					method: 'POST',
+					...(
+						settings.BACKEND_URL.includes('/translate')
+						? {}
+						: {headers: {'Content-Type': 'application/json'}}
+					),
+					body: settings.BACKEND_URL.includes('/translate') ? textSource : JSON.stringify({
+						message: 'translate sentences',
+						content: textSource
+					})
+				})
+				.catch(async (err) => {
+					if (!settings.BACKEND_URL.includes('/translate'))
+					{
+						const newBackendUrl = settings.BACKEND_URL.replace(/\/+$/, '') + '/translate'
+						if (await new Promise(resolve => {
+							fetch(newBackendUrl, {
+								method: 'POST',
+								//headers: {'Content-Type': 'application/json'},
+								body: textSource
+							})
+							.catch(e => resolve(false))
+							.then(async (res) => {
+								try
+								{
+									await res.json()
+									console.log(
+'Switching the backend URL from %s to %s without updating/saving settings because the one without /translate didn\'t work',
+										settings.BACKEND_URL, newBackendUrl
+									)
+									// we don't save it into localStorage just in case
+									settings.BACKEND_URL = newBackendUrl
+									temporailyDisallowBreak = true
+									resolve(true)
+								}
+								catch (e)
+								{
+console.error('Tried to use the fallback: although connection was successful, the server returned an incorrect JSON message')
+									resolve(false)
+								}
+							})
+						}))
+						{
+							resolve(true)
+							return
+						}
+					}
+					errorEl.innerHTML = 'Error: ' + err.message + `. Retrying in ${retryIn}ms.`
+					console.error(err.message)
+					await wait(retryIn)
+					resolve(false)
+				})
+				.then(async (resp) => {
+					if (!resp)
+					{
+						errorEl.innerHTML = `Error: Could not connect to Sugoi-Japanese-Translator. Retrying in ${retryIn}ms.`
+						await wait(retryIn)
+						resolve(false)
+						return
+					}
+					let res
+					try
+					{
+						res = (await resp.json()).trim() // it sends us a JSON string
+						if (isItTheLatest) lastTranslatedTextResult = res
+					}
+					catch (e)
+					{
+						errorEl.innerHTML = `Error: Response from Sugoi-Japanese-Translator is not valid JSON, see the browser console. Retrying in ${retryIn}ms.`
+						console.error(e.message)
+						await wait(retryIn)
+						resolve(false)
+						return
+					}
+					errorEl.innerHTML = ''
+					if (isItTheLatest) lastTranslatedTextSource = textSource
+					if (isItTheLatest) lastTranslatedTextResult = res
+					if (settings.MAX_CACHE_SIZE !== 0)
+					{
+						if (Math.random() < 0.05 && await getRecordsCountInNonRamCache() === settings.MAX_CACHE_SIZE)
+						{
+							await removeEarliestRecordsInNonRamDb('c', 1)
+						}
+					}
+					await cl(res, isItTheLatest)
+
+					if (settings.MAX_CACHE_SIZE !== 0)
+					{
+						// also store everything in RAM
+						// because localStorage has limit of 5MB per domain.
+						cacheInRam.set(textSource, res)
+					}
+					textResultEl.innerHTML = res
+					resolve(true)
+				})))
+				{
+					if (temporailyDisallowBreak)
+					{
+						temporailyDisallowBreak = false
+					}
+					else
+					{
+						locked = false
+						break
+					}
+				}
+			}
+		}
+		if (settings.TRANSLATE === TRANSLATE_EVERYTHING) await fn(
+			textSource,
+			document.querySelector('.theerror'),
+			sugoiLatestResultEl
+		)
+		else
+		{
+			//console.log('hobobo')
+			lastTranslatedTextSource = textSource
+			lastTranslatedTextResult = ''
+			await cl('', true)
+			if (settings.TRANSLATE === TRANSLATE_ONCLICK)
+			{
+				sugoiLatestSourceEl.onclick = async (e) => {
+					const clickedEl = e.currentTarget || e.target
+					if (clickedEl.__onclickLocked) return
+					clickedEl.__onclickLocked = true
+					await fn(
+						//textSource,
+						clickedEl.value || clickedEl.innerText,
+						document.querySelector('.theerror'),
+						//sugoiLatestResultEl,
+						clickedEl.nextElementSibling || (() => {//clickedEl.nextElementSibling always exists only for the latest one
+							const newLogMsgResult = document.createElement('DIV')
+							newLogMsgResult.className = 'sugoi__log__message__result'
+							newLogMsgResult.setAttribute('lang', 'en')
+							clickedEl.parentNode.appendChild(newLogMsgResult)
+							return newLogMsgResult
+						})(),
+						true,
+					)
+					clickedEl.onclick = null
+					clickedEl.__onclickLocked = false
+				}
+				if (prevLogMsg) prevLogMsg.src.onclick = sugoiLatestSourceEl.onclick
+			}
+			else
+			{
+				alert('impossible settings.TRANSLATE=' + settings.TRANSLATE + ' at this stage')
+			}
+			locked = false
 		}
 		//deeplGoogle-SugoiEnd
 	}
