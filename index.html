@@ -2184,24 +2184,38 @@ setInterval(async () => {
 								body: textSource
 							})
 							.catch(e => resolve(false))
-							.then(async (res) => {
+							.then(async (resp) => {
 								try
 								{
-									await res.text()
-									console.log(
-'Switching the backend URL from %s to %s without updating/saving settings because the one without /translate didn\'t work',
-										settings.BACKEND_URL, newBackendUrl
-									)
-									// we don't save it into localStorage just in case
-									settings.BACKEND_URL = newBackendUrl
-									temporailyDisallowBreak = true
-									resolve(true)
+									resp = await resp.text()
 								}
 								catch (e)
 								{
-console.error('Tried to use the fallback: although connection was successful, the server returned an incorrect JSON message')
+									console.error('resp.text() failed')
+//console.error('Tried to use the fallback: although connection was successful, the server returned an incorrect JSON message')
 									resolve(false)
+									return
 								}
+								if (!resp.trim())
+								{
+									console.error('Empty response from `%s`', newBackendUrl)
+									resolve(false)
+									return
+								}
+								if (/<!DOCTYPE|404 not found/i.test(resp))
+								{
+									console.error('Bad response from `%s`: `%O`', newBackendUrl, resp)
+									resolve(false)
+									return
+								}
+								console.log(
+'Switching the backend URL from %s to %s without updating/saving settings because the one without /translate didn\'t work',
+									settings.BACKEND_URL, newBackendUrl
+								)
+								// we don't save it into localStorage just in case
+								settings.BACKEND_URL = newBackendUrl
+								temporailyDisallowBreak = true
+								resolve(true)
 							})
 						}))
 						{
