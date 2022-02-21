@@ -151,7 +151,7 @@
 <br>by clipboard-inserter extension.
 <br>When you insert, interface will change: zen mode will be activated (invisible scrollbar for windows with ≤599px width, no README, etc.).
 <br>Settings are at the bottom of the page.
-<br>The source code of this page was <a href="https://github.com/arzeth/sugoi-web/commits/main" target="blank">last updated</a> at 2022-02-21T16:42:27+00:00
+<br>The source code of this page was <a href="https://github.com/arzeth/sugoi-web/commits/main" target="blank">last updated</a> at 2022-02-21T16:58:05+00:00
 </b></i>
 <br>
 <h3>How to automatically move text from CTRL+C/V to here:</h3>
@@ -2187,7 +2187,7 @@ setInterval(async () => {
 							.then(async (res) => {
 								try
 								{
-									await res.json()
+									await res.text()
 									console.log(
 'Switching the backend URL from %s to %s without updating/saving settings because the one without /translate didn\'t work',
 										settings.BACKEND_URL, newBackendUrl
@@ -2225,7 +2225,11 @@ console.error('Tried to use the fallback: although connection was successful, th
 					let res
 					try
 					{
-						res = (await resp.json()).trim() // it sends us a JSON string
+						res = (await resp.text()).trim() // it sends us a JSON string
+						try {
+							res = JSON.parse(res).trim()
+						} catch (e) {
+						}
 						if (isItTheLatest) lastTranslatedTextResult = res
 					}
 					catch (e)
