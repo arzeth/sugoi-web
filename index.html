@@ -67,6 +67,10 @@
 			border-right: 0;
 			width: 100%;
 		}
+		.sugoi__translate-button {
+			display: none;
+			margin: -1px 0 5px 2px;
+		}
 		.sugoi__source,
 		.sugoi__log__message__source {
 			font-size: 28.5px;
@@ -147,7 +151,7 @@
 <br>by clipboard-inserter extension.
 <br>When you insert, interface will change: zen mode will be activated (invisible scrollbar for windows with ≤599px width, no README, etc.).
 <br>Settings are at the bottom of the page.
-<br>The source code of this page was <a href="https://github.com/arzeth/sugoi-web/commits/main" target="blank">last updated</a> at 2022-02-13T21:52:00+00:00
+<br>The source code of this page was <a href="https://github.com/arzeth/sugoi-web/commits/main" target="blank">last updated</a> at 2022-02-21T16:42:27+00:00
 </b></i>
 <br>
 <h3>How to automatically move text from CTRL+C/V to here:</h3>
@@ -279,13 +283,12 @@ You can use this upscaler (quality is better than Magpie) for most VNs:
 	<!--placeholder="Enter the text in 日本語"-->
 <textarea
 	class="sugoi__source"
-	readonly
 	rows="4"
 	data-minrows="2"
-	placeholder="Nothing was pasted yet" 
+	placeholder="Nothing was pasted yet"
 	lang="jp"
 >
-</textarea><div class="sugoi__result" lang="en">
+</textarea><button class="sugoi__translate-button">Translate</button><div class="sugoi__result" lang="en">
 </div><div class="sugoi__log"><!--
 	<div class="sugoi__log__message">
 		<div class="sugoi__log__message__source">
@@ -1608,8 +1611,25 @@ const getCachedTranslatedTextResult = async (textSource) => {
 	return null
 }
 
-const sugoiLatestSourceEl = document.querySelector('.sugoi__source')
-const sugoiLatestResultEl = document.querySelector('.sugoi__result')
+const sugoiLatestSourceEl  = document.querySelector('.sugoi__source')
+const sugoiLatestResultEl  = document.querySelector('.sugoi__result')
+const sugoiTranslateButton = document.querySelector('.sugoi__translate-button')
+
+sugoiLatestSourceEl.addEventListener('input', () => {
+	if (sugoiLatestSourceEl.value.trim() && window.fixText(sugoiLatestSourceEl.value) !== window.lastTranslatedTextSource)
+	{
+		sugoiTranslateButton.style.display = 'block'
+	}
+	else
+	{
+		sugoiTranslateButton.style.display = 'none'
+	}
+})
+sugoiTranslateButton.addEventListener('click', () => { // yes, that's a very bad practice to use MutationObserver instead of a separate function
+	const p = document.createElement('P')
+	p.textContent = sugoiLatestSourceEl.value
+	document.body.appendChild(p)
+})
 
 if (isFirefox)
 {
@@ -1864,8 +1884,19 @@ const wait = async (ms) => {
 		setTimeout(() => resolve(), ms)
 	})
 }
-let lastTranslatedTextSource = ''
+//let lastTranslatedTextSource = ''
 let lastTranslatedTextResult = ''
+{
+	let x
+	Object.defineProperty(window,  'lastTranslatedTextSource', { // bad code practice
+		get: () => x,
+		set: (newValue) => {
+			x = newValue
+			sugoiTranslateButton.style.display = 'none'
+		},
+		enumerable: true,
+	})
+}
 
 if (typeof settings === 'undefined') // that means it's DeepL or Google Translate
 {
@@ -1957,7 +1988,7 @@ setInterval(async () => {
 	const textSource = startsWithSpace ? abc[abc.length - 1].trim() : abc[abc.length - 1]
 	abc.length = 0 // free RAM
 	//console.log('req')
-	if (!textSource/* || textSource === lastTranslatedTextSource*/)
+	if (!textSource/* || textSource === window.lastTranslatedTextSource*/)
 	{
 		//console.log('re')
 		locked = false
@@ -1971,7 +2002,7 @@ setInterval(async () => {
 		if (
 			settings.MAX_LOG_SIZE !== 0
 			&&
-			lastTranslatedTextSource
+			window.lastTranslatedTextSource
 		)
 		{
 			try {
@@ -1980,7 +2011,7 @@ setInterval(async () => {
 					(await getSortedLogKeysFromNonRam())
 					.slice(-1)[0]
 					.slice(0, dbLogKeyPrefixPlusDateLength),
-					lastTranslatedTextSource,
+					window.lastTranslatedTextSource,
 					lastTranslatedTextResult,
 				)
 			} catch (e)
@@ -1990,6 +2021,7 @@ setInterval(async () => {
 		}
 		sugoiLatestSourceEl.value = textSource
 		sugoiLatestSourceEl.onclick = null
+		sugoiLatestSourceEl.onfocus = null
 		sugoiLatestSourceEl.__autoresize()
 		sugoiLatestResultEl.innerHTML = ''
 
@@ -2045,7 +2077,7 @@ setInterval(async () => {
 		if (settings.TRANSLATE === TRANSLATE_NOTHING)
 		{
 			cl('', true)
-			lastTranslatedTextSource = textSource
+			window.lastTranslatedTextSource = textSource
 			lastTranslatedTextResult = ''
 			locked = false
 			return
@@ -2064,7 +2096,7 @@ setInterval(async () => {
 				if (startsWithSpace === true)
 				{
 					src = textSource
-					if (isItTheLatest) lastTranslatedTextSource = src
+					if (isItTheLatest) window.lastTranslatedTextSource = src
 					res = ''
 					if (isItTheLatest) lastTranslatedTextResult = res
 					found = true
@@ -2072,7 +2104,7 @@ setInterval(async () => {
 				else if (cacheInRam.has(textSource))
 				{
 					src = textSource
-					if (isItTheLatest) lastTranslatedTextSource = src
+					if (isItTheLatest) window.lastTranslatedTextSource = src
 					res = cacheInRam.get(textSource)
 					if (isItTheLatest) lastTranslatedTextResult = res
 					found = true
@@ -2083,7 +2115,7 @@ setInterval(async () => {
 					if (typeof resultFromCache === 'string')
 					{
 						src = textSource
-						if (isItTheLatest) lastTranslatedTextSource = src
+						if (isItTheLatest) window.lastTranslatedTextSource = src
 						res = resultFromCache
 						if (isItTheLatest) lastTranslatedTextResult = res
 						found = true
@@ -2205,7 +2237,7 @@ console.error('Tried to use the fallback: although connection was successful, th
 						return
 					}
 					errorEl.innerHTML = ''
-					if (isItTheLatest) lastTranslatedTextSource = textSource
+					if (isItTheLatest) window.lastTranslatedTextSource = textSource
 					if (isItTheLatest) lastTranslatedTextResult = res
 					if (settings.MAX_CACHE_SIZE !== 0)
 					{
@@ -2246,21 +2278,25 @@ console.error('Tried to use the fallback: although connection was successful, th
 		else
 		{
 			//console.log('hobobo')
-			lastTranslatedTextSource = textSource
+			window.lastTranslatedTextSource = textSource
 			lastTranslatedTextResult = ''
 			await cl('', true)
 			if (settings.TRANSLATE === TRANSLATE_ONCLICK)
 			{
-				sugoiLatestSourceEl.onclick = async (e) => {
+				sugoiLatestSourceEl.onclick = sugoiLatestSourceEl.onfocus = async (e) => {
 					const clickedEl = e.currentTarget || e.target
 					if (clickedEl.__onclickLocked) return
 					clickedEl.__onclickLocked = true
 					await fn(
 						//textSource,
-						clickedEl.value || clickedEl.innerText,
+						clickedEl.value || clickedEl.textContent,
 						document.querySelector('.theerror'),
 						//sugoiLatestResultEl,
-						clickedEl.nextElementSibling || (() => {//clickedEl.nextElementSibling always exists only for the latest one
+						(
+							clickedEl.nextElementSibling?.tagName === 'BUTTON'
+							? clickedEl.nextElementSibling.nextElementSibling
+							: clickedEl.nextElementSibling
+						) || (() => {//clickedEl.nextElementSibling always exists only for the latest one
 							const newLogMsgResult = document.createElement('DIV')
 							newLogMsgResult.className = 'sugoi__log__message__result'
 							newLogMsgResult.setAttribute('lang', 'en')
@@ -2270,6 +2306,7 @@ console.error('Tried to use the fallback: although connection was successful, th
 						true,
 					)
 					clickedEl.onclick = null
+					clickedEl.onfocus = null
 					clickedEl.__onclickLocked = false
 				}
 				if (prevLogMsg) prevLogMsg.src.onclick = sugoiLatestSourceEl.onclick
@@ -2338,26 +2375,9 @@ console.error('Tried to use the fallback: although connection was successful, th
 }*/
 
 
-
-
-window.mutObserver = new MutationObserver(function (mutations) { for (const mutation of mutations) {
-	//console.log('step1')
-	if (!(
-		mutation.target === document.body &&
-		mutation.type === 'childList' &&
-		mutation.addedNodes.length
-	)) {
-		return
-	}
-	//console.log('step2')
-
-	// .reverse().find() is kind of like if .lastFind existed
-	const tempPTag = Array.from(mutation.addedNodes).reverse().find(x => x.tagName === 'P')
-	if (!tempPTag) return
-	//console.log('step3')
-
-	let text = tempPTag.textContent.trim()
-	tempPTag.remove() // the tag created by clipboard-inserter extension has served its purpose
+window.fixText = (text) => {
+	text = text.trim()
+	if (!text) return
 	if (/http|\.replace\(|\.test\(|const\s|ffmpeg|#include|#define/i.test(text)) return
 	//console.log('step4')
 	
@@ -2384,7 +2404,7 @@ window.mutObserver = new MutationObserver(function (mutations) { for (const muta
 			)
 		)
 		{
-			enqueue(' ' + text) // `text` was trimmed before. So we can use ` ` as a marker to avoid sending it to translation
+			return ' ' + text // `text` was trimmed before. So we can use ` ` as a marker to avoid sending it to translation
 			/*const t = Date.now()
 			addLogMessageToDom(
 				dbLogKeyPrefix + t,
@@ -2398,7 +2418,7 @@ window.mutObserver = new MutationObserver(function (mutations) { for (const muta
 		}
 		return
 	}
-	window.preText = text
+	window.preText = text // this variable is for debugging
 
 	// Fix for https://vndb.org/v22899
 	// そしてそれは島全域に適用され、俺が今日から通う_r『_t!250,4,3,みのつき/水乃月学園』も同じのようであった。
@@ -2438,7 +2458,7 @@ window.mutObserver = new MutationObserver(function (mutations) { for (const muta
 	//console.log('step6')
 	if (settings.DEDUPLICATE)
 	{
-		window.preJText = onlyJapSymbols
+		window.preJText = onlyJapSymbols // this variable is for debugging
 		/*window.preJTextA = onlyJapSymbols.slice(0, Math.ceil(onlyJapSymbols.length / 2))
 		window.preJTextB = onlyJapSymbols.slice(Math.ceil(onlyJapSymbols.length / 2))
 		window.preJTextA2 = onlyJapSymbols.slice(0, Math.floor(onlyJapSymbols.length / 2))
@@ -2492,10 +2512,35 @@ window.mutObserver = new MutationObserver(function (mutations) { for (const muta
 			text = text.slice(2 + Math.ceil(text.length / 2))
 		}*/
 	}
+	return text
+}
+
+
+
+window.mutObserver = new MutationObserver(function (mutations) { for (const mutation of mutations) {
+	//console.log('step1')
+	if (!(
+		mutation.target === document.body &&
+		mutation.type === 'childList' &&
+		mutation.addedNodes.length
+	)) {
+		return
+	}
+	//console.log('step2')
+
+	// .reverse().find() is kind of like if .lastFind existed
+	const tempPTag = Array.from(mutation.addedNodes).reverse().find(x => x.tagName === 'P')
+	if (!tempPTag) return
+	//console.log('step3')
+
+	let text = tempPTag.textContent
+	tempPTag.remove() // the tag created by clipboard-inserter extension has served its purpose
+	text = fixText(text)
+	if (!text) return
 	if (typeof enableZenMode === 'function') enableZenMode()
 	document.documentElement.classList.add('ZENMODE')
 	window.lastText = text
-	
+
 	const tt = document.querySelector('.lmt__source_textarea, textarea[aria-label="Source text"], textarea[aria-label="Text source"], textarea[aria-label="Testo di origine"], textarea[role="combobox"], #txtSource')
 	if (tt)
 	{
