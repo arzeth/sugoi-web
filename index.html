@@ -2494,6 +2494,10 @@ window.fixText = (text) => {
 	}
 	//console.log('step5')
 	if (onlyJapSymbols.length > settings.DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED) return
+	if (text.includes('」') && !text.includes('「'))
+	{
+		text = '「' + text
+	}
 	//console.log('step6')
 	if (settings.DEDUPLICATE)
 	{
