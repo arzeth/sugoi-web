@@ -1373,12 +1373,13 @@ setInterval(async () => {
 	if (intervalLocked) return
 	intervalLocked = true
 	{
-		const ch = sugoiLog.children
+		await removeEarilestLogMessages(void 0)
+		/*const ch = sugoiLog.children
 		//console.log(ch.length + 1, settings.MAX_LOG_SIZE)
 		if (ch.length + 1 > settings.MAX_LOG_SIZE)
 		{
 			await removeEarilestLogMessages(ch.length + 1 - settings.MAX_LOG_SIZE, ch)
-		}
+		}*/
 	}
 
 	if (!areObjectShallowEqual(settings, lastSettingsAppiledInTheSetInterval))
