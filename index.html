@@ -1150,6 +1150,8 @@ const __getRecordsCountInNonRamDb = async (type) => {
 		: '.cleanAllLog-Button__num'
 	).textContent = ret
 
+	return ret
+
 	/*
 	let ret = 0
 	const re = new RegExp('^' + getDbKeyPrefix(type) +
@@ -1294,12 +1296,21 @@ document.querySelector('.cleanAllCache-Button').onclick = async () => {
 
 // __chch can be supplied for microoptimization, see the `else` branch
 const removeEarilestLogMessages = async (howMany, __chch) => {
-	if (howMany <= 0) return
-	console.assert(typeof howMany === 'number')
+	// if howMany === void 0, then make it so that the message count is less than MAX_LOG_SIZE
+	if (howMany !== void 0)
+	{
+		if (howMany <= 0) return
+		console.assert(typeof howMany === 'number')
+	}
 	//console.log('removeEarilestLogMessages(%O)', howMany)
 	//console.trace()
 	if (availableNonRamStorages.length)
 	{
+		if (howMany === void 0)
+		{
+			howMany = (await recountLogKeys()) - settings.MAX_LOG_SIZE
+			if (!(howMany > 0)) return
+		}
 		const fullDbKeys = await removeEarliestRecordsInNonRamDb('l', howMany)
 		howMany = Math.min(howMany, fullDbKeys.length)
 		for (let i = 0; i < howMany; i++)
@@ -1315,13 +1326,21 @@ const removeEarilestLogMessages = async (howMany, __chch) => {
 	{
 		__chch = __chch || sugoiLog.children // TODO in the future: change to ||=
 		const chLength = ch.length
-		howMany = Math.min(howMany, chLength) // yes, this line is not present inside removeEarliestRecordsInNonRamDb
+		howMany = (
+			howMany === void 0
+			? chLength - settings.MAX_LOG_SIZE
+			: Math.min(howMany, chLength)
+		) // yes, this line is not present inside removeEarliestRecordsInNonRamDb
+		if (!(howMany > 0)) return
 		for (let i = chLength - 1; i >= chLength - howMany; i--)
 		{
 			sugoiLog.removeChild(ch[i])
 		}
 	}
-	recountLogKeys()
+	if (howMany > 0)
+	{
+		recountLogKeys()
+	}
 }
 document.querySelector('.cleanAllLog-Button').onclick = () => {
 	/*await */removeEarilestLogMessages(Infinity)
