@@ -2572,11 +2572,11 @@ window.fixText = (text) => {
 	)
 
 	const onlyJapSymbols = getOnlyJapSymbols(text)
-	if (/セーブ画面へ移動します|ゲームを終了します/.test(onlyJapSymbols)) return // buttons' tooltips
-	if (onlyJapSymbols.replace(/は|い|え/g, '').length <= 0)//<= 1
+	/*if (onlyJapSymbols.replace(/は|い|え/g, '').length <= 0)//<= 1
 	{
 		return
-	}
+	}*/
+	if (/セーブ画面へ移動します|ゲームを終了します/.test(onlyJapSymbols)) return // buttons' tooltips
 	//console.log('step5')
 	if (onlyJapSymbols.length > settings.DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED) return
 	if (text.includes('」') && !text.includes('「'))
