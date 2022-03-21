@@ -363,7 +363,7 @@ You can use this upscaler (quality is better than Magpie) for most VNs:
 		<input disabled checked type="checkbox" name="IS_CACHE_MULTISESSION"/>
 	</label>
 	<label>
-		(default=yes, <i>cur=<span data-var="DEDUPLICATE"></span></i>) Try to deduplicate the input.
+		(default=no, <i>cur=<span data-var="DEDUPLICATE"></span></i>) Try to deduplicate the input.
 		<input checked type="checkbox" name="DEDUPLICATE"/>
 	</label>
 	<label>
@@ -543,6 +543,14 @@ const getTextBetween = (
 
 const hasOwn = Object.hasOwn || Function.prototype.call.bind(Object.prototype.hasOwnProperty);
 
+const noCacheHeaders = {
+	'pragma': 'no-cache',
+	'cache-control': 'no-cache',
+}
+const corsHeaders = {
+	referrerPolicy: 'origin',
+	mode: 'cors',
+}
 
 function storageAvailable (
 	type,
@@ -790,7 +798,7 @@ const settings = {
 	MAX_CACHE_SIZE: db ? 200e3 : 1000,
 	IS_LOG_MULTISESSION: 1,
 	IS_CACHE_MULTISESSION: 1,
-	DEDUPLICATE: 1,
+	DEDUPLICATE: 0,
 	TRANSLATE: 3, // 1 = never translate, 2 = translate on click, 3 = translate all
 	NONJAP_INTO_LOG: 2,
 	BACKEND_URL: 'http://localhost:14366/',
@@ -1534,9 +1542,8 @@ const addLogMessageToDom = (
 			const onChangeFn = function () {
 				fetch(settings.SEND_HUMAN_TRANSLATIONS_TO, {
 					method: 'POST',
-					referrerPolicy: 'origin',
-					mode: 'cors',
-					headers: {'Content-Type': 'application/json'},
+					...noCacheHeaders,
+					headers: {'Content-Type': 'application/json', ...noCacheHeaders,},
 					body: JSON.stringify({
 						fn: 'set',
 						recordCreatedOrUpdatedOn: Date.now(),
@@ -1558,15 +1565,15 @@ const addLogMessageToDom = (
 			el.className = 'sugoi__log__message__htl'
 			el.setAttribute('lang', resultLang)
 			el.setAttribute('placeholder', resultLang)
+			el.setAttribute('rows', '6')
 			el.addEventListener('input', onChangeFn)
 			newLogMsg.appendChild(el)
 			elsByLang[resultLang] = el
 		}
 		fetch(settings.SEND_HUMAN_TRANSLATIONS_TO, {
 			method: 'POST',
-			referrerPolicy: 'origin',
-			mode: 'cors',
-			headers: {'Content-Type': 'application/json'},
+			...noCacheHeaders,
+			headers: {'Content-Type': 'application/json', ...noCacheHeaders,},
 			body: JSON.stringify({
 				fn: 'getBySourceIdOrSourceTxt',
 				recordCreatedOrUpdatedOn: Date.now(),
@@ -2002,7 +2009,7 @@ if (typeof settings === 'undefined') // that means it's DeepL or Google Translat
 		INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE: 1300,
 		INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE_SHALL_BE_ACTIVATED_WHEN_QUEUE_SIZE_IS_OVER: 5,
 		DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE: 2,
-		DEDUPLICATE: 1,
+		DEDUPLICATE: 0,
 		TRANSLATE: TRANSLATE_EVERYTHING,
 	}
 }
@@ -2252,16 +2259,18 @@ setInterval(async () => {
 			}
 
 
+
 			textResultEl.textContent = '... ... ... ... ... ... ... ... ... ...'
 			let temporailyDisallowBreak = false
 			for (;;)
 			{
 				if (await new Promise(resolve => fetch(settings.BACKEND_URL, {
 					method: 'POST',
+					...corsHeaders,
 					...(
 						settings.BACKEND_URL.includes('/translate')
-						? {}
-						: {headers: {'Content-Type': 'application/json'}}
+						? {headers: {...noCacheHeaders}}
+						: {headers: {'Content-Type': 'application/json', ...noCacheHeaders}}
 					),
 					body: settings.BACKEND_URL.includes('/translate') ? textSource : JSON.stringify({
 						message: 'translate sentences',
@@ -2275,6 +2284,7 @@ setInterval(async () => {
 						if (await new Promise(resolve => {
 							fetch(newBackendUrl, {
 								method: 'POST',
+								...corsHeaders,
 								//headers: {'Content-Type': 'application/json'},
 								body: textSource
 							})
