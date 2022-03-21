@@ -387,6 +387,10 @@ You can use this upscaler (quality is better than Magpie) for most VNs:
 		<input type="text" name="BACKEND_URL"/>
 	</label>
 	<label>
+		(default=<i>(empty)</i>, <i>cur=<span data-var="SEND_HUMAN_TRANSLATIONS_TO"></span></i>) Send human translations (a POST request) to:
+		<input type="text" name="SEND_HUMAN_TRANSLATIONS_TO"/>
+	</label>
+	<label>
 		(default=yes, <i>cur=<span data-var="SHOW_README"></span></i>) Show the very long README.
 		<input checked type="checkbox" name="SHOW_README"/>
 	</label>
@@ -790,6 +794,7 @@ const settings = {
 	TRANSLATE: 3, // 1 = never translate, 2 = translate on click, 3 = translate all
 	NONJAP_INTO_LOG: 2,
 	BACKEND_URL: 'http://localhost:14366/',
+	SEND_HUMAN_TRANSLATIONS_TO: '',
 	SHOW_README: 1,
 	SHOW_SETTINGS_IN_ZEN_MODE: 0,
 	COLOR_THEME: 'white',
@@ -805,7 +810,7 @@ Object.preventExtensions(settings)
 window.s = settings // for debugging
 
 const INVISIBLE_SETTINGS = ['BACKEND_VERSION']
-const STRING_KEYS = ['BACKEND_URL', 'CUSTOM_CSS', 'COLOR_THEME']
+const STRING_KEYS = ['BACKEND_URL', 'SEND_HUMAN_TRANSLATIONS_TO', 'CUSTOM_CSS', 'COLOR_THEME']
 
 const sugoiSettingsForm = document.querySelector('.sugoi__settings')
 
@@ -924,7 +929,7 @@ const syncSettings = () => {
 					)
 					||
 					(
-						key === 'BACKEND_URL' && isValidBackendUrl(b[key])
+						(key === 'BACKEND_URL' || key === 'SEND_HUMAN_TRANSLATIONS_TO') && isValidBackendUrl(b[key])
 					)
 					||
 					(
@@ -1024,7 +1029,7 @@ sugoiSettingsForm.onsubmit = function (e) {
 					}
 					else if (el.type === 'text')
 					{
-						if (k === 'BACKEND_URL')
+						if (k === 'BACKEND_URL' || k === 'SEND_HUMAN_TRANSLATIONS_TO')
 						{
 							if (!isValidBackendUrl(v))
 							{
@@ -1516,6 +1521,74 @@ const addLogMessageToDom = (
 		newLogMsgResult.setAttribute('lang', 'en')
 		newLogMsgResult.textContent = resultTxt
 		newLogMsg.appendChild(newLogMsgResult)
+	}
+	if (settings.SEND_HUMAN_TRANSLATIONS_TO)
+	{
+		const langs = ['en', 'ru']
+		const elsByLang = {
+			en: null,
+			ru: null,
+		}
+		for (const resultLang of langs)
+		{
+			const onChangeFn = function () {
+				fetch(settings.SEND_HUMAN_TRANSLATIONS_TO, {
+					method: 'POST',
+					referrerPolicy: 'origin',
+					mode: 'cors',
+					headers: {'Content-Type': 'application/json'},
+					body: JSON.stringify({
+						fn: 'set',
+						recordCreatedOrUpdatedOn: Date.now(),
+						sourceId,
+						sourceTxt,
+						resultLang,
+						resultTxt: (
+							resultLang === 'en'
+							? this.value.replace(/~~~/g, resultTxt) // rarely needed
+							: this.value
+						),
+					}),
+				})
+				.catch(async (err) => {
+					alert(err.message)
+				})
+			}
+			const el = document.createElement('TEXTAREA')
+			el.className = 'sugoi__log__message__htl'
+			el.setAttribute('lang', resultLang)
+			el.setAttribute('placeholder', resultLang)
+			el.addEventListener('input', onChangeFn)
+			newLogMsg.appendChild(el)
+			elsByLang[resultLang] = el
+		}
+		fetch(settings.SEND_HUMAN_TRANSLATIONS_TO, {
+			method: 'POST',
+			referrerPolicy: 'origin',
+			mode: 'cors',
+			headers: {'Content-Type': 'application/json'},
+			body: JSON.stringify({
+				fn: 'getBySourceIdOrSourceTxt',
+				recordCreatedOrUpdatedOn: Date.now(),
+				sourceId,
+				sourceTxt,
+				whichLangsToGet: langs,
+				resultTxt: this.value,
+			})
+		})
+		.catch(e => {
+			console.error(e)
+		})
+		.then(async (result) => {
+			if (!result) return
+			result = JSON.parse(await result.text())
+			if (!result) return
+			for (const lang in result)
+			{
+				if (!hasOwn(result, lang)) continue
+				elsByLang[lang].value = result[lang]
+			}
+		})
 	}
 	sugoiLog.prepend(newLogMsg)
 
