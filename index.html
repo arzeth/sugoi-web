@@ -2218,7 +2218,7 @@ setInterval(async () => {
 				}
 				if (found === true)
 				{
-					textResultEl.textContent = res
+					textResultEl.textContent = res.replace(/<unk>/g, '')
 
 					if (db)
 					{
@@ -2339,6 +2339,7 @@ setInterval(async () => {
 							res = JSON.parse(res).trim()
 						} catch (e) {
 						}
+						res = res.replace(/<unk>/g, '')
 						if (isItTheLatest) lastTranslatedTextResult = res
 					}
 					catch (e)
