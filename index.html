@@ -2145,7 +2145,7 @@ setInterval(async () => {
 				}
 				if (found === true)
 				{
-					textResultEl.innerHTML = res
+					textResultEl.textContent = res
 
 					if (db)
 					{
@@ -2173,13 +2173,13 @@ setInterval(async () => {
 			if (!kerpa && settings.TRANSLATE !== TRANSLATE_EVERYTHING)
 			{
 				//console.log('kerpa end')
-				textResultEl.innerHTML = ''
+				textResultEl.textContent = ''
 				locked = false
 				return
 			}
 
 
-			textResultEl.innerHTML = '... ... ... ... ... ... ... ... ... ...'
+			textResultEl.textContent = '... ... ... ... ... ... ... ... ... ...'
 			let temporailyDisallowBreak = false
 			for (;;)
 			{
@@ -2294,7 +2294,7 @@ setInterval(async () => {
 						// because localStorage has limit of 5MB per domain.
 						cacheInRam.set(textSource, res)
 					}
-					textResultEl.innerHTML = res
+					textResultEl.textContent = res
 					resolve(true)
 				})))
 				{
