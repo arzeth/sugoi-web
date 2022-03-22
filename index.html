@@ -1020,6 +1020,7 @@ sugoiSettingsForm.onsubmit = function (e) {
 						alert('input has bad value, check min&max limits');
 						el.focus();
 					}
+					v = v.trim()
 					if (el.type === 'number')
 					{
 						if (!(
@@ -1039,9 +1040,11 @@ sugoiSettingsForm.onsubmit = function (e) {
 					{
 						if (k === 'BACKEND_URL' || k === 'SEND_HUMAN_TRANSLATIONS_TO')
 						{
-							if (!isValidBackendUrl(v))
+							if (!isValidBackendUrl(v) && !(!v && k === 'SEND_HUMAN_TRANSLATIONS_TO'))
 							{
-								fail()
+								//fail()
+								alert('bad url')
+								el.focus()
 								return false
 							}
 						}
@@ -1070,7 +1073,6 @@ sugoiSettingsForm.onsubmit = function (e) {
 					}
 					else if (STRING_KEYS.includes(k))
 					{
-						v = v.trim()
 						return true
 					}
 					else console.error('bad type! %O', el)
