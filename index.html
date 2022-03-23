@@ -1512,7 +1512,7 @@ const addLogMessageToDom = (
 	{
 		console.warn('<unk> found in `%s` → `%s`', sourceTxt, resultTxt)
 	}*/
-	resultTxt = resultTxt.replace(/ *<unk> */g, ' ')
+	resultTxt = fixSugoiBackendAnswer(resultTxt)
 	const newLogMsg = document.createElement('DIV')
 	newLogMsg.className = 'sugoi__log__message'
 	newLogMsg.id = sourceId
@@ -1953,7 +1953,20 @@ document.querySelector('[name="CUSTOM_CSS"]').addEventListener(
 )
 
 
-
+const fixSugoiBackendAnswer = (answer) =>
+{
+	answer = answer
+	.replace(/([.?!])<unk>/g, '$1\n')
+	.replace(/(?:<unk>\s+)+/g, ' ')
+	.replace(/(?:<unk>){2,}/g, '\n')
+	.replace(/<unk>/g, '')
+	.replace(/」\s?「/g, '」\n「')
+	if (answer.indexOf('"') === answer.length - 1)
+	{
+		answer = answer.slice(0, -1)
+	}
+	return answer
+}
 
 
 
@@ -2227,7 +2240,7 @@ setInterval(async () => {
 				}
 				if (found === true)
 				{
-					textResultEl.textContent = res.replace(/<unk>/g, '')
+					textResultEl.textContent = fixSugoiBackendAnswer(res)
 
 					if (db)
 					{
@@ -2264,6 +2277,7 @@ setInterval(async () => {
 
 			textResultEl.textContent = '... ... ... ... ... ... ... ... ... ...'
 			let temporailyDisallowBreak = false
+			const textSourceToSend = textSource.replace(/」[\n]+「/mg, '」「')
 			for (;;)
 			{
 				if (await new Promise(resolve => fetch(settings.BACKEND_URL, {
@@ -2274,9 +2288,9 @@ setInterval(async () => {
 						? {headers: {...noCacheHeaders}}
 						: {headers: {'Content-Type': 'application/json', ...noCacheHeaders}}
 					),
-					body: settings.BACKEND_URL.includes('/translate') ? textSource : JSON.stringify({
+					body: settings.BACKEND_URL.includes('/translate') ? textSourceToSend : JSON.stringify({
 						message: 'translate sentences',
-						content: textSource
+						content: textSourceToSend
 					})
 				})
 				.catch(async (err) => {
@@ -2288,7 +2302,7 @@ setInterval(async () => {
 								method: 'POST',
 								...corsHeaders,
 								//headers: {'Content-Type': 'application/json'},
-								body: textSource
+								body: 'テスト。'
 							})
 							.catch(e => resolve(false))
 							.then(async (resp) => {
@@ -2351,7 +2365,7 @@ setInterval(async () => {
 							res = JSON.parse(res).trim()
 						} catch (e) {
 						}
-						res = res.replace(/<unk>/g, '')
+						res = fixSugoiBackendAnswer(res)
 						if (isItTheLatest) lastTranslatedTextResult = res
 					}
 					catch (e)
