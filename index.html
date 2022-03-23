@@ -1955,26 +1955,34 @@ document.querySelector('[name="CUSTOM_CSS"]').addEventListener(
 
 const fixSugoiBackendAnswer = window.f = (answer, textSource) =>
 {
+	//if (answer.includes('full'))
+		//console.log(window.a=answer, window.b=textSource)
+	if (!textSource.startsWith('「') && answer.startsWith('<unk>')) answer = answer.slice(5)
 	answer = answer
-	.replace(/<unk>(\s*[A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk><unk>([A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk>["”]?$/, '「$1」\n「$2」')
-	.replace(/<unk>(\s*[A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk><unk>(?=[A-ZÄËÖÜÏÁÉÓÚÍ])/g, '「$1」\n「')
-	.replace(/<unk>(\s*[A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk>([A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk>["”]?$/, '$1「\n$2」')
-	.replace(/([.?!])<unk>(?!["”]?$)/g, '$1\n')
+	.replace(/<unk>(\s*[A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk><unk>(\s*[A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk>["”]?$/, '「$1」\n「$2」')
+	.replace(/<unk>(\s*[A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk><unk>(?=\s*[A-ZÄËÖÜÏÁÉÓÚÍ])/g, '「$1」\n「')
+	//.replace(/<unk>(\s*[A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk>(\s*[A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk>["”]?$/, '$1「\n$2」')
+	.replace(/<unk>(\s*[A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk>(?=\s*「|["”]?$|\s*[A-ZÄËÖÜÏÁÉÓÚÍ])/g, '\n「$1」\n')
+	//.replace(/([.?!])<unk>(?!["”]?$)/g, '$1\n')
+	.trim().replace(/\n{2,}/g, '\n')
+	.replace(/"(」?)$/, '$1')
+	.replace(/<unk>「/g, '」「')
 	.replace(/(?:<unk>\s+)+/g, ' ')
 	.replace(/(?:<unk>){2,}/g, '\n')
 		// そして夏休みは明けて、今日から新学期。「初日からフルで７限あるんだよね。ウチの学校は……。少しくらい、手加減して始業式だけで終わってくれないもんかね」
 		// <unk> the end of summer break, today's the start of the new semester.<unk>We've got seven full classes starting on the first day. Our school...... It's not like they're going to go easy on us just for the opening ceremony<unk>"
 	.replace(/<unk>/g, '')
-	.replace(/「\n+/mg, '「')
-	.replace(/」\s?「/g, '」\n「')
-	if (answer.indexOf('"') === answer.length - 1)
+	.replace(/「\n+/g, '「')
+	.replace(/」\s*「/g, '」\n「')
+	.trim().replace(/\n{2,}/g, '\n')
+	/*if (answer.indexOf('"') === answer.length - 1)
 	{
 		answer = answer.slice(0, -1)
 	}
 	else if (answer.indexOf('"') === answer.length - 2 && answer.slice(-1)[0] === '」')
 	{
 		answer = answer.slice(-2) + '」'
-	}
+	}*/
 	if (textSource)
 	{
 		// curl -d '「ったくよう……」おかげで思っていた様々な懸念のほとんどが払拭されてしまった。' http://localhost:14366/translate
@@ -1996,7 +2004,7 @@ const fixSugoiBackendAnswer = window.f = (answer, textSource) =>
 		{
 			answer += '」'
 		}
-		answer = answer.replace(/\s+」/mg, '」') // there is a bug somewhere in this code
+		answer = answer.replace(/\s+」/g, '」') // there is a bug somewhere in this function
 		if (/[a-zA-Z]」$/.test(answer))
 		{
 			if (textSource.endsWith('？」') && /[a-zA-Z]」$/.test(answer)) answer = answer.slice(0, -1) + '?」'
@@ -2009,7 +2017,20 @@ const fixSugoiBackendAnswer = window.f = (answer, textSource) =>
 			else if (textSource.endsWith('…') && /[a-zA-Z]$/.test(answer)) answer = answer + '…'
 		}
 	}
-	answer = answer.replace(/\s+」/mg, '」') // there is a bug somewhere in this code
+
+	answer = answer.replace(/\s+」/g, '」') // there is a bug somewhere in this function
+
+	// 「そ、そうなのか」どうやら、あのカレーを食べても彩花にはあんまり効果がないどころか、むしろよく眠れたらしい。なんか色々と違うものなんだな。「ま、今日くらいは何とかなるだろ」
+	answer = answer.replace(/」(?=\s*(?:[一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]))/gu, '」。')
+
+	// answer = answer.replace(/(?<!\n)「/g, '\n「')) // look-behind is unsupported in Safari
+	answer = answer
+	.replace(/「/g, '\n「')
+	.replace(/\n{2,}/g, '\n')
+	.trim()
+
+	//console.log('result = %O', answer)
+
 	return answer
 }
 
@@ -2323,7 +2344,14 @@ setInterval(async () => {
 			textResultEl.textContent = '... ... ... ... ... ... ... ... ... ...'
 			let temporailyDisallowBreak = false
 			const textSourceToSend = textSource
-			.replace(/」[\n]+「/mg, '」「')
+			.replace(/」[\n]+「/g, '」「')
+			.replace(/^(?=.*[“"（(【\[［《『]|\s*(?:[一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]).+「)/u, '。')
+			//.replace(/^(?=.*[””‟）)】］\]》』『|\s*(?:[一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]).+「)/u)
+
+			// 「ふうぅ……、やべぇ、まじで身体熱いんだけど」なに？　なんなのあのカレー。スパイスの効きが凄いのか、あれから身体がずっと熱い感じが続いていた。「スパイスって、滋養強壮効果ってのもあるんだな」
+			.replace(/」(?=\s*(?:[一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]))/ug, '」。 ')
+			
+
 			for (;;)
 			{
 				if (await new Promise(resolve => fetch(settings.BACKEND_URL, {
