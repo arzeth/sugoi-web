@@ -1956,16 +1956,24 @@ document.querySelector('[name="CUSTOM_CSS"]').addEventListener(
 const fixSugoiBackendAnswer = window.f = (answer, textSource) =>
 {
 	answer = answer
-	.replace(/<unk>([A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk><unk>([A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk>$/, '「$1」\n「$2」')
-	.replace(/<unk>([A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk><unk>(?=[A-ZÄËÖÜÏÁÉÓÚÍ])/g, '「$1」\n「')
-	.replace(/([.?!])<unk>(?!$)/g, '$1\n')
+	.replace(/<unk>(\s*[A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk><unk>([A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk>["”]?$/, '「$1」\n「$2」')
+	.replace(/<unk>(\s*[A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk><unk>(?=[A-ZÄËÖÜÏÁÉÓÚÍ])/g, '「$1」\n「')
+	.replace(/<unk>(\s*[A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk>([A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk>["”]?$/, '$1「\n$2」')
+	.replace(/([.?!])<unk>(?!["”]?$)/g, '$1\n')
 	.replace(/(?:<unk>\s+)+/g, ' ')
 	.replace(/(?:<unk>){2,}/g, '\n')
+		// そして夏休みは明けて、今日から新学期。「初日からフルで７限あるんだよね。ウチの学校は……。少しくらい、手加減して始業式だけで終わってくれないもんかね」
+		// <unk> the end of summer break, today's the start of the new semester.<unk>We've got seven full classes starting on the first day. Our school...... It's not like they're going to go easy on us just for the opening ceremony<unk>"
 	.replace(/<unk>/g, '')
+	.replace(/「\n+/mg, '「')
 	.replace(/」\s?「/g, '」\n「')
 	if (answer.indexOf('"') === answer.length - 1)
 	{
 		answer = answer.slice(0, -1)
+	}
+	else if (answer.indexOf('"') === answer.length - 2 && answer.slice(-1)[0] === '」')
+	{
+		answer = answer.slice(-2) + '」'
 	}
 	if (textSource)
 	{
@@ -1994,8 +2002,11 @@ const fixSugoiBackendAnswer = window.f = (answer, textSource) =>
 			if (textSource.endsWith('？」') && /[a-zA-Z]」$/.test(answer)) answer = answer.slice(0, -1) + '?」'
 			else if (textSource.endsWith('？') && /[a-zA-Z]$/.test(answer)) answer = answer + '?'
 
-			if (textSource.endsWith('！」') && /[a-zA-Z]」$/.test(answer)) answer = answer.slice(0, -1) + '!」'
+			else if (textSource.endsWith('！」') && /[a-zA-Z]」$/.test(answer)) answer = answer.slice(0, -1) + '!」'
 			else if (textSource.endsWith('！') && /[a-zA-Z]$/.test(answer)) answer = answer + '!'
+
+			else if (textSource.endsWith('…」') && /[a-zA-Z]」$/.test(answer)) answer = answer.slice(0, -1) + '…」'
+			else if (textSource.endsWith('…') && /[a-zA-Z]$/.test(answer)) answer = answer + '…'
 		}
 	}
 	answer = answer.replace(/\s+」/mg, '」') // there is a bug somewhere in this code
