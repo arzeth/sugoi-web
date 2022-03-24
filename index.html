@@ -20,14 +20,7 @@
 			/* didn't think too much about fonts */
 			font-family: 'Noto Sans JP', 'Noto Sans', 'Source Han Gothic';
 		}
-		@media (max-width: 599px) {
-			html.ZENMODE {
-				scrollbar-width: none
-			}
-			html.ZENMODE::-webkit-scrollbar {
-				display: none;
-			}
-		}
+
 		html.ZENMODE, .ZENMODE body {
 			margin: 0;
 			padding: 0;
@@ -83,6 +76,18 @@
 		}
 		::-webkit-scrollbar-thumb:active {
 			background: #999;
+		}
+
+		@media (max-width: 599px) {
+			html.ZENMODE {
+				scrollbar-width: none;
+			}
+			html.ZENMODE::-webkit-scrollbar,
+			html.ZENMODE ::-webkit-scrollbar {
+				display: none;
+				height: 0;
+				width: 0;
+			}
 		}
 
 		code {
