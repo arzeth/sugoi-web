@@ -2011,6 +2011,7 @@ const fixSugoiBackendAnswer = window.f = (answer, textSource) =>
 {
 	//if (answer.includes('full'))
 		//console.log(window.a=answer, window.b=textSource)
+	if (!answer.trim() || !textSource.trim()) return ''
 	if (!textSource.startsWith('「') && answer.startsWith('<unk>')) answer = answer.slice(5)
 	answer = answer
 	.replace(/<unk>([\s…]*[A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk><unk>([\s…]*[A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk>["”]?$/, '「$1」\n「$2」')
@@ -2649,6 +2650,12 @@ window.fixText = (text) => {
 	if (!text) return
 	if (/http|\.replace\(|\.test\(|const\s|ffmpeg|#include|#define/i.test(text)) return
 	//console.log('step4')
+
+	if (text === '…」」') text = '「…………」' // Yuzusoft's Tenshin Ranman
+
+	//い、そのつもりです」
+	//if (/^「い[。、](?!いい))/.test(text)) text = '「はい' + text.slice(2) // Yuzusoft's Tenshin Ranman
+	//else if (/^い[。、](?!いい)/.test(text)) text = 'はい' + text.slice(1) // Yuzusoft's Tenshin Ranman
 	
 	// 「じゅるっ、おちんちんしゃぶられながら蕩けそうな顔しちゃっ_rてるの、可愛い……①　頭バカになっちゃうほど射精させて_rあげるねぇ……①」
 	// anomaly: 「んっ……ほああぁぁぁ、花丸カリ高チンポ入ってきちゃいま_rしたぁあぁぁあぁ……すみません橘くん、ながらセックスに_rなってしまいまして」
@@ -2819,8 +2826,9 @@ window.mutObserver = new MutationObserver(function (mutations) { for (const muta
 	{
 		enqueue(text, tt)
 	}
-	else // sugoi
+	else // sugoi-japanese-translator:
 	{
+		sugoiLatestSourceEl?.blur()
 		enqueue(text)
 	}
 	//tt.focus()
