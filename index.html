@@ -848,6 +848,10 @@ const possibleColorThemes = Object.freeze(
 	.map(x => x.getAttribute('value'))
 )
 
+const REMOVE_NAMES_NEVER = 1
+const REMOVE_NAMES_EXCEPT_FOR_NO_AND_LETTER_AND_DIGITS = 2
+const REMOVE_NAMES_ALWAYS = 3
+
 const settings = {
 	DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED: 260,
 	MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE: 300,
@@ -1563,9 +1567,7 @@ const TRANSLATE_NOTHING = 1
 const TRANSLATE_ONCLICK = 2
 const TRANSLATE_EVERYTHING = 3
 
-const REMOVE_NAMES_NEVER = 1
-const REMOVE_NAMES_EXCEPT_FOR_NO_AND_LETTER_AND_DIGITS = 2
-const REMOVE_NAMES_ALWAYS = 3
+
 
 const addLogMessageToDom = (
 	sourceId,
