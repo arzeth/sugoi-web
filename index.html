@@ -273,7 +273,7 @@ https://addons.mozilla.org/firefox/addon/10ten-ja-reader/
 <br>Or you can use another similar extension <a target="_blank" href="https://foosoft.net/projects/yomichan/">Yomichan</a>, but don't forget to add "Kanjium (Pitch dictionary)".
 <br>
 <h3>Notes</h3>
-Names in most cases are translated wrong (because there are multiple readings) or sometimes they become nouns, e.g. "Sora" might become "sky".
+Names in ~16% cases are translated wrong (because there are multiple readings) or sometimes they become nouns, e.g. "Sora" might become "sky".
 <br>
 Also use
 <a target="_blank" href="https://jlptsensei.com/complete-jlpt-grammar-list/">
@@ -419,6 +419,14 @@ You can use this upscaler (quality is better than Magpie) for most VNs:
 	<label>
 		(default=no, <i>cur=<span data-var="DEDUPLICATE"></span></i>) Try to deduplicate the input.
 		<input checked type="checkbox" name="DEDUPLICATE"/>
+	</label>
+	<label>
+		(default=option #2, <i>cur=<span data-var="REMOVE_NAMES"></span></i>) Remove names from the input.
+		<select name="REMOVE_NAMES" size="3">
+			<option value="1">No</option>
+			<option value="2">Remove all【…】 just before 「 unless it has の,A-Z,0-9</option>
+			<option value="3">Remove all【…】 just before 「.</option>
+		</select>
 	</label>
 	<label>
 		(default=option #3, <i>cur=option #<span data-var="TRANSLATE"></span></i>) Translate
@@ -843,16 +851,19 @@ const possibleColorThemes = Object.freeze(
 const settings = {
 	DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED: 260,
 	MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE: 300,
+
 	// if Ctrl'ing through a VN
 	INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE: 1300,
 	INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE_SHALL_BE_ACTIVATED_WHEN_QUEUE_SIZE_IS_OVER: 7,
 	DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE: 4,
 	//DROP_MESSAGES_UNLESS_QUEUE_SIZE_IS_LTE duplicate?
+
 	MAX_LOG_SIZE: 500,
 	MAX_CACHE_SIZE: db ? 200e3 : 1000,
 	IS_LOG_MULTISESSION: 1,
 	IS_CACHE_MULTISESSION: 1,
 	DEDUPLICATE: 0,
+	REMOVE_NAMES: REMOVE_NAMES_EXCEPT_FOR_NO_AND_LETTER_AND_DIGITS,
 	TRANSLATE: 3, // 1 = never translate, 2 = translate on click, 3 = translate all
 	NONJAP_INTO_LOG: 2,
 	BACKEND_URL: 'http://localhost:14366/',
@@ -1115,7 +1126,7 @@ sugoiSettingsForm.onsubmit = function (e) {
 						{
 							return true
 						}
-						if (k === 'NONJAP_INTO_LOG' || k === 'TRANSLATE')
+						if (k === 'NONJAP_INTO_LOG' || k === 'TRANSLATE' || k === 'REMOVE_NAMES')
 						{
 							v = +v
 							return true
@@ -1551,6 +1562,10 @@ ${
 const TRANSLATE_NOTHING = 1
 const TRANSLATE_ONCLICK = 2
 const TRANSLATE_EVERYTHING = 3
+
+const REMOVE_NAMES_NEVER = 1
+const REMOVE_NAMES_EXCEPT_FOR_NO_AND_LETTER_AND_DIGITS = 2
+const REMOVE_NAMES_ALWAYS = 3
 
 const addLogMessageToDom = (
 	sourceId,
@@ -2142,11 +2157,14 @@ if (typeof settings === 'undefined') // that means it's DeepL or Google Translat
 	window.settings = {
 		DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED: 260,
 		MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE: 300,
+
 		// if Ctrl'ing through a VN
 		INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE: 1300,
 		INCREASED_MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE_SHALL_BE_ACTIVATED_WHEN_QUEUE_SIZE_IS_OVER: 5,
 		DROP_ALL_PENDING_MSGS_EXCEPT_THE_NEWEST_ONE_UNLESS_THE_QUEUE_SIZE_IS_LTE: 2,
+
 		DEDUPLICATE: 0,
+		REMOVE_NAMES: REMOVE_NAMES_NEVER,
 		TRANSLATE: TRANSLATE_EVERYTHING,
 	}
 }
@@ -2650,17 +2668,37 @@ window.fixText = (text) => {
 	if (!text) return
 	if (/http|\.replace\(|\.test\(|const\s|ffmpeg|#include|#define/i.test(text)) return
 	//console.log('step4')
+	if (settings.REMOVE_NAMES === REMOVE_NAMES_NEVER)
+	{
+		text = text.replace(/(^|[。！？…」])((?:[一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]|[ａ-ｚ]|[Ａ-Ｚ]|[０-９]){1,9})】\s*「/ug, '$1\n【$2】「').trim()
+	}
+	else
+	{//幼少時代の遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」
+		if (settings.REMOVE_NAMES === REMOVE_NAMES_EXCEPT_FOR_NO_AND_LETTER_AND_DIGITS)
+		{
+			text = text.replace(/【(?:[一-龠]|(?!の)[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]){1,9}】\s*「/ug, '\n「').trim()
+			text = text.replace(/(^|[。！？…」])(?:[一-龠]|(?!の)[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]){1,9}】\s*「/ug, '$1\n「').trim()
+			text = text.replace(/(^|[。！？…」])((?:[一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]|[ａ-ｚ]|[Ａ-Ｚ]|[０-９]){1,9})】\s*「/ug, '$1\n【$2】「').trim()
+			//text = text.replace(/(^|[。！？…」])((?:[一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]){1,9})】\s*「/ug, '$1\n「').trim()
+		}
+		else if (settings.REMOVE_NAMES === REMOVE_NAMES_ALWAYS)
+		{
+			text = text.replace(/【[^】]{1,9}】\s*「/ug, '\n「').trim()
+			text = text.replace(/(^|[。！？…」])((?:[一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]|[ａ-ｚ]|[Ａ-Ｚ]|[０-９]){1,9})】\s*「/ug, '$1\n「').trim()
+		}
+		//大蔵遊星】「銃を捨ててください」   ,,,,,,,      家庭教師Ａ】「遊星君、五歳にもなってこんな問題もできないのですか。お仕置きが足りないようですね」
+	}
+	text = text.replace(/フォントプレビューウインドウプレビューフレームデザインを選択してくださいフォントプレビューウインドウプレビューフレームデザインを選んでください。/g, '')
 
-	if (text === '…」」') text = '「…………」' // Yuzusoft's Tenshin Ranman
+	if (text === '…」」') text = '「…………」'
+	else if (text === '…。。') text = '………。'
 
-	//い、そのつもりです」
-	//if (/^「い[。、](?!いい))/.test(text)) text = '「はい' + text.slice(2) // Yuzusoft's Tenshin Ranman
-	//else if (/^い[。、](?!いい)/.test(text)) text = 'はい' + text.slice(1) // Yuzusoft's Tenshin Ranman
-	
 	// 「じゅるっ、おちんちんしゃぶられながら蕩けそうな顔しちゃっ_rてるの、可愛い……①　頭バカになっちゃうほど射精させて_rあげるねぇ……①」
 	// anomaly: 「んっ……ほああぁぁぁ、花丸カリ高チンポ入ってきちゃいま_rしたぁあぁぁあぁ……すみません橘くん、ながらセックスに_rなってしまいまして」
 	// 当初、このようなセックスOKな条例を施行する上で問題となっ_rたのは「健康問題」と「治安問題」であったらしい。
 	// 「そして、俺は……絶対お前に九九をマスターさせてみせる―_r―！」
+
+	text = text.replace(/\n{2,}/g, '\n')
 
 
 	if (!/[一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[々〆〤]/u.test(text)) //[ａ-ｚＡ-Ｚ０-９]+|
@@ -2708,6 +2746,9 @@ window.fixText = (text) => {
 	//「あっ……そんなところにも、まだ舐めてないおちんちんが……①_r  うふふっ、美化委員特有の清楚なおまんこで舐め舐めして_rあげますね――」
 	// too long text 「これがオチンチンだったらすっごく気持ちいいと思いません_rかぁ～……？　今ならローションなしでもぐちゅぐちゅで溢_rれ出る蜜壺もサービスしちゃいますよぉ～♪」
 
+	//い、そのつもりです」
+	//if (/^いっ*[。、！？](?!い)(?:[ぁ-ゔ])/u.test(text)) text = 'は' + text // in case a Textractor's hook starts to glitch (fixed by Textractor's restart)
+	text = text.replace(/^(?=、はい[」。、！？])/, 'は') // in case a Textractor's hook starts to glitch (fixed by Textractor's restart)
 
 	if (/![♪_\\\/<>\u2003-\u2005´*•‧‣%§†‡‰#№¡!！՜¿?？⁈⁉՞;；:：׃⁏'‘‚׳`‛’"״「」『』﹁﹂““””„‟（）()【】［］\[\]《》{}｛　｝﹏,，、֊・.।。‖։~〜…‥«»―\-]$/.test(text))
 	{
@@ -2729,7 +2770,7 @@ window.fixText = (text) => {
 		return
 	}*/
 	if (/セーブ画面へ移動します|ゲームを終了します/.test(onlyJapSymbols)) return // buttons' tooltips
-	//console.log('step5')
+	
 	if (onlyJapSymbols.length > settings.DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED) return
 	if (text.includes('」') && !text.includes('「'))
 	{
@@ -2794,8 +2835,86 @@ window.fixText = (text) => {
 	}
 	return text
 }
-
-
+const testIfStrictEqual = (ideal, given) =>
+{
+	if (ideal !== given)
+	{
+		console.error('s=%O, ideal=%O\ngiven=%O', settings.REMOVE_NAMES, ideal, given)
+	}
+}
+{
+	const origSettingsVal = settings.REMOVE_NAMES
+	settings.REMOVE_NAMES = REMOVE_NAMES_NEVER
+	{
+		testIfStrictEqual(
+			'【幼少時代遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」'
+			,
+			fixText('幼少時代遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」')
+		)
+		testIfStrictEqual(
+			'【幼少時代遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」'
+			,
+			fixText('【幼少時代遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」')
+		)
+		testIfStrictEqual(
+			'【幼少時代の遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」'
+			,
+			fixText('幼少時代の遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」')
+		)
+		testIfStrictEqual(
+			'【幼少時代の遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」'
+			,
+			fixText('【幼少時代の遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」')
+		)
+	}
+	settings.REMOVE_NAMES = REMOVE_NAMES_EXCEPT_FOR_NO_AND_LETTER_AND_DIGITS
+	{
+		testIfStrictEqual(
+			'「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」'
+			,
+			fixText('幼少時代遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」')
+		)
+		testIfStrictEqual(
+			'「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」'
+			,
+			fixText('【幼少時代遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」')
+		)
+		testIfStrictEqual(
+			'【幼少時代の遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」'
+			,
+			fixText('【幼少時代の遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」')
+		)
+		testIfStrictEqual(
+			'【幼少時代の遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」'
+			,
+			fixText('幼少時代の遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」')
+		)
+	}
+	settings.REMOVE_NAMES = REMOVE_NAMES_ALWAYS
+	{
+		testIfStrictEqual(
+			'「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」'
+			,
+			fixText('幼少時代遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」')
+		)
+		testIfStrictEqual(
+			'「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」'
+			,
+			fixText('【幼少時代遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」')
+		)
+		testIfStrictEqual(
+			'「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」'
+			,
+			fixText('【幼少時代の遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」')
+		)
+		testIfStrictEqual(
+			'「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」'
+			,
+			fixText('幼少時代の遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」')
+		)
+	}
+	settings.REMOVE_NAMES = origSettingsVal
+}
 
 window.mutObserver = new MutationObserver(function (mutations) { for (const mutation of mutations) {
 	//console.log('step1')
