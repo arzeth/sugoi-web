@@ -206,7 +206,7 @@
 <br>by clipboard-inserter extension.
 <br>When you insert, interface will change: zen mode will be activated (invisible scrollbar for windows with ≤599px width, no README, etc.).
 <br>Settings are at the bottom of the page.
-<br>The source code of this page was <a href="https://github.com/arzeth/sugoi-web/commits/main" target="blank">last updated</a> at 2022-03-23T20:27:30+00:00
+<br>The source code of this page was <a href="https://github.com/arzeth/sugoi-web/commits/main" target="blank">last updated</a> at 2022-04-27T05:52:15+00:00
 </b></i>
 <br>
 <h3>Screenshots</h3>
@@ -618,6 +618,7 @@ const noCacheHeaders = {
 const corsHeaders = {
 	referrerPolicy: 'origin',
 	mode: 'cors',
+	credentials: 'omit',
 }
 
 function storageAvailable (
@@ -2426,7 +2427,6 @@ setInterval(async () => {
 
 
 			textResultEl.textContent = '... ... ... ... ... ... ... ... ... ...'
-			let temporailyDisallowBreak = false
 			const textSourceToSend = textSource
 			.replace(/」[\n]+「/g, '」「')
 			.replace(/^(?=.*[“"（(【\[［《『]|[\s…]*(?:[一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[ヶ々〆〤]).+「)/u, '。')
@@ -2437,96 +2437,63 @@ setInterval(async () => {
 			.replace(/あ{3,}/g, 'ああ')
 			.replace(/え{3,}/g, 'ええ')
 
-			for (;;)
+			const potentialNewBackendUrl = settings.BACKEND_URL.replace(/\/+$/, '') + '/translate'
+			for (let i = 0;; i++)
 			{
-				if (await new Promise(resolve => fetch(settings.BACKEND_URL, {
+				const curAttemptBackendUrl = (
+					i % 2 === 1 && !settings.BACKEND_URL.includes('/translate')
+					? potentialNewBackendUrl
+					: settings.BACKEND_URL
+				)
+				if (await new Promise(resolve => fetch(curAttemptBackendUrl, {
 					method: 'POST',
 					...corsHeaders,
 					...(
-						settings.BACKEND_URL.includes('/translate')
+						curAttemptBackendUrl.includes('/translate')
 						? {headers: {...noCacheHeaders}}
 						: {headers: {'Content-Type': 'application/json', ...noCacheHeaders}}
 					),
-					body: settings.BACKEND_URL.includes('/translate') ? textSourceToSend : JSON.stringify({
+					body: curAttemptBackendUrl.includes('/translate') ? textSourceToSend : JSON.stringify({
 						message: 'translate sentences',
 						content: textSourceToSend
 					})
 				})
-				.catch(async (err) => {
-					if (!settings.BACKEND_URL.includes('/translate'))
-					{
-						const newBackendUrl = settings.BACKEND_URL.replace(/\/+$/, '') + '/translate'
-						if (await new Promise(resolve => {
-							fetch(newBackendUrl, {
-								method: 'POST',
-								...corsHeaders,
-								//headers: {'Content-Type': 'application/json'},
-								body: 'テスト。'
-							})
-							.catch(e => resolve(false))
-							.then(async (resp) => {
-								try
-								{
-									resp = await resp.text()
-								}
-								catch (e)
-								{
-									console.error('resp.text() failed')
-//console.error('Tried to use the fallback: although connection was successful, the server returned an incorrect JSON message')
-									resolve(false)
-									return
-								}
-								if (!resp.trim())
-								{
-									console.error('Empty response from `%s`', newBackendUrl)
-									resolve(false)
-									return
-								}
-								if (/<!DOCTYPE|404 not found/i.test(resp))
-								{
-									console.error('Bad response from `%s`: `%O`', newBackendUrl, resp)
-									resolve(false)
-									return
-								}
-								console.log(
-'Switching the backend URL from %s to %s without updating/saving settings because the one without /translate didn\'t work',
-									settings.BACKEND_URL, newBackendUrl
-								)
-								// we don't save it into localStorage just in case
-								settings.BACKEND_URL = newBackendUrl
-								temporailyDisallowBreak = true
-								resolve(true)
-							})
-						}))
-						{
-							resolve(true)
-							return
-						}
-					}
-					errorEl.innerHTML = 'Error: ' + err.message + `. Retrying in ${retryIn}ms.`
-					console.error(err.message)
-					await wait(retryIn)
-					resolve(false)
-				})
 				.then(async (resp) => {
-					if (!resp)
+					if (!resp.ok)
 					{
-						errorEl.innerHTML = `Error: Could not connect to Sugoi-Japanese-Translator. Retrying in ${retryIn}ms.`
-						await wait(retryIn)
-						resolve(false)
-						return
+						throw 'Could not connect to Sugoi-Japanese-Translator'
+						//errorEl.innerHTML = `Error: Could not connect to Sugoi-Japanese-Translator. Retrying in ${retryIn}ms.`
+						//resolve(false)
+						//return
 					}
 					let res
+					console.warn(resp)
 					try
 					{
-						res = (await resp.text()).trim() // it sends us a JSON string
-						try {
-							res = JSON.parse(res).trim()
-						} catch (e) {
-						}
-						res = fixSugoiBackendAnswer(res, textSource)
-						if (isItTheLatest) lastTranslatedTextResult = res
+						res = (await resp.text()).trim()
+						console.warn(res)
+					} catch (e)
+					{
+						throw '.text failed!'
 					}
+
+					try {
+						res = JSON.parse(res).trim()
+						console.warn(res)
+					} catch (e) {
+					}
+					if (!res) throw 'empty response'
+					if (/<!DOCTYPE/i.test(res))
+					{
+						throw 'Bad backend\'s answer because it contains <!DOCTYPE'
+					}
+					if (/404 not found/i.test(res))
+					{
+						throw 'Bad backend\'s answer because it contains "404 not found"'
+					}
+					res = fixSugoiBackendAnswer(res, textSource)
+					if (isItTheLatest) lastTranslatedTextResult = res
+					/*}
 					catch (e)
 					{
 						errorEl.innerHTML = `Error: Response from Sugoi-Japanese-Translator is not valid JSON, see the browser console. Retrying in ${retryIn}ms.`
@@ -2534,8 +2501,17 @@ setInterval(async () => {
 						await wait(retryIn)
 						resolve(false)
 						return
-					}
+					}*/
 					errorEl.innerHTML = ''
+					if (i % 2 === 1)
+					{
+						console.log(
+'Switching the backend URL from %s to %s without updating/saving settings because the one without /translate didn\'t work',
+							settings.BACKEND_URL, potentialNewBackendUrl
+						)
+						// we don't save it into localStorage just in case
+						settings.BACKEND_URL = potentialNewBackendUrl
+					}
 					if (isItTheLatest) window.lastTranslatedTextSource = textSource
 					if (isItTheLatest) lastTranslatedTextResult = res
 					if (settings.MAX_CACHE_SIZE !== 0)
@@ -2555,18 +2531,18 @@ setInterval(async () => {
 					}
 					textResultEl.textContent = res
 					resolve(true)
-				})))
+				})
+				.catch(e => {
+					console.error(e)
+					errorEl.innerHTML = `${curAttemptBackendUrl} failed because: ${typeof e === 'string' ? e : e.message}`
+					resolve(false)
+				})
+				))
 				{
-					if (temporailyDisallowBreak)
-					{
-						temporailyDisallowBreak = false
-					}
-					else
-					{
-						locked = false
-						break
-					}
+					locked = false
+					break
 				}
+				await wait(retryIn)
 			}
 		}
 		if (settings.TRANSLATE === TRANSLATE_EVERYTHING) await fn(
