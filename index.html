@@ -2440,6 +2440,7 @@ setInterval(async () => {
 			const potentialNewBackendUrl = settings.BACKEND_URL.replace(/\/+$/, '') + '/translate'
 			for (let i = 0;; i++)
 			{
+				if (i % 2 === 0 && settings.BACKEND_URL.includes('/translate')) continue // just in case
 				const curAttemptBackendUrl = (
 					i % 2 === 1 && !settings.BACKEND_URL.includes('/translate')
 					? potentialNewBackendUrl
@@ -2503,7 +2504,7 @@ setInterval(async () => {
 						return
 					}*/
 					errorEl.innerHTML = ''
-					if (i % 2 === 1)
+					if (i % 2 === 1 && !settings.BACKEND_URL.includes('/translate'))
 					{
 						console.log(
 'Switching the backend URL from %s to %s without updating/saving settings because the one without /translate didn\'t work',
