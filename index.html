@@ -2290,15 +2290,23 @@ setInterval(async () => {
 				console.error(e)
 			}
 		}
+		else
+		{
+			const msg = document.querySelector('.sugoi__log__message'),
+			prevLogMsg = {
+				msg: msg,
+				src: msg.querySelector('.sugoi__log__message__source'),
+				res: msg.querySelector('.sugoi__log__message__result'),
+			}
+		}
 		sugoiLatestSourceEl.value = textSource
-		sugoiLatestSourceEl.onclick = null
-		sugoiLatestSourceEl.onfocus = null
 		sugoiLatestSourceEl.__autoresize()
 		sugoiLatestResultEl.innerHTML = ''
 
 		const t = Date.now()
 		const retryIn = 1000
-		const cl = async (res, isItTheLatest) => {
+		const addToCacheAndLog = async (res, isItTheLatest) => {
+			console.log('addToCacheAndLog(textSource=%O res=%O t=%O isItTheLatest=%O)', textSource, res, t, isItTheLatest)
 			if (db)
 			{
 				//console.log('2 db.l add `%O`', textSource)
@@ -2315,7 +2323,7 @@ setInterval(async () => {
 						res,
 					}),
 
-					isItTheLatest ? /*await */db.l.put({
+					1||isItTheLatest ? /*await */db.l.put({
 						t: t,
 						src: textSource,
 						res,
@@ -2347,7 +2355,7 @@ setInterval(async () => {
 		}
 		if (settings.TRANSLATE === TRANSLATE_NOTHING)
 		{
-			cl('', true)
+			addToCacheAndLog('', true)
 			window.lastTranslatedTextSource = textSource
 			lastTranslatedTextResult = ''
 			locked = false
@@ -2525,7 +2533,7 @@ setInterval(async () => {
 							await removeEarliestRecordsInNonRamDb('c', 1)
 						}
 					}
-					await cl(res, isItTheLatest)
+					await addToCacheAndLog(res, isItTheLatest)
 
 					if (settings.MAX_CACHE_SIZE !== 0)
 					{
@@ -2559,9 +2567,10 @@ setInterval(async () => {
 			//console.log('hobobo')
 			window.lastTranslatedTextSource = textSource
 			lastTranslatedTextResult = ''
-			await cl('', true)
+			await addToCacheAndLog('', true)
 			if (settings.TRANSLATE === TRANSLATE_ONCLICK)
 			{
+				if (prevLogMsg && !prevLogMsg.src.onclick) prevLogMsg.src.onclick = sugoiLatestSourceEl.onclick
 				sugoiLatestSourceEl.onclick/* = sugoiLatestSourceEl.onfocus*/ = async (e) => {
 					const clickedEl = e.currentTarget || e.target
 					if (clickedEl.__onclickLocked) return
@@ -2588,7 +2597,6 @@ setInterval(async () => {
 					clickedEl.onfocus = null
 					clickedEl.__onclickLocked = false
 				}
-				if (prevLogMsg) prevLogMsg.src.onclick = sugoiLatestSourceEl.onclick
 			}
 			else
 			{
