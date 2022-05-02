@@ -109,11 +109,15 @@
 			display: none;
 		}
 		.sugoi__source {
-			border-bottom: 2px dashed #a00;
-			border-top: 0;
-			border-left: 0;
-			border-right: 0;
+			border: 0;
+			outline: none;
 			width: 100%;
+		}
+		.sugoi__result {
+			border-top: 2px dashed #a00;
+		}
+		.sugoi__result:empty {
+			display: none;
 		}
 		html.PAUSED .sugoi__source {
 			background: #aaa;
@@ -206,7 +210,7 @@
 <br>by clipboard-inserter extension.
 <br>When you insert, interface will change: zen mode will be activated (invisible scrollbar for windows with ≤599px width, no README, etc.).
 <br>Settings are at the bottom of the page.
-<br>The source code of this page was <a href="https://github.com/arzeth/sugoi-web/commits/main" target="blank">last updated</a> at 2022-04-27T05:52:15+00:00
+<br>The source code of this page was <a href="https://github.com/arzeth/sugoi-web/commits/main" target="blank">last updated</a> at 2022-05-02T22:58:15+00:00
 </b></i>
 <br>
 <h3>Screenshots</h3>
@@ -350,8 +354,7 @@ You can use this upscaler (quality is better than Magpie) for most VNs:
 	placeholder="Nothing was pasted yet"
 	lang="jp"
 >
-</textarea><button class="sugoi__translate-button">Translate</button><div class="sugoi__result" lang="en">
-</div><div class="sugoi__log"><!--
+</textarea><button class="sugoi__translate-button">Translate</button><div class="sugoi__result" lang="en"></div><div class="sugoi__log"><!--
 	<div class="sugoi__log__message">
 		<div class="sugoi__log__message__source">
 			いかにも噂話というパターンではあったが、とにかく、多くの人が知っていた。
@@ -1510,7 +1513,7 @@ setInterval(async () => {
 }
 ${
 	settings.LASTMSG_RESULT_FONTSIZE < 1
-	? '.sugoi__source {border-bottom: 0;}'
+	? '.sugoi__result {border-top: 0;}'
 	: ''
 }
 ${
@@ -2559,7 +2562,7 @@ setInterval(async () => {
 			await cl('', true)
 			if (settings.TRANSLATE === TRANSLATE_ONCLICK)
 			{
-				sugoiLatestSourceEl.onclick = sugoiLatestSourceEl.onfocus = async (e) => {
+				sugoiLatestSourceEl.onclick/* = sugoiLatestSourceEl.onfocus*/ = async (e) => {
 					const clickedEl = e.currentTarget || e.target
 					if (clickedEl.__onclickLocked) return
 					clickedEl.__onclickLocked = true
