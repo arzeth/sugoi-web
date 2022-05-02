@@ -2468,11 +2468,11 @@ setInterval(async () => {
 						//return
 					}
 					let res
-					console.warn(resp)
+					//console.warn(resp)
 					try
 					{
 						res = (await resp.text()).trim()
-						console.warn(res)
+						//console.warn(res)
 					} catch (e)
 					{
 						throw '.text failed!'
@@ -2480,7 +2480,7 @@ setInterval(async () => {
 
 					try {
 						res = JSON.parse(res).trim()
-						console.warn(res)
+						//console.warn(res)
 					} catch (e) {
 					}
 					if (!res) throw 'empty response'
