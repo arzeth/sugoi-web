@@ -431,10 +431,12 @@ You can use this upscaler (quality is better than Magpie) for most VNs:
 	</label>
 	<label>
 		(default=option #2, <i>cur=<span data-var="REMOVE_NAMES"></span></i>) Remove names from the input.
-		<select name="REMOVE_NAMES" size="3">
+		<select name="REMOVE_NAMES" size="5">
 			<option value="1">No</option>
 			<option value="2">Remove all【…】 just before 「 unless it has の,A-Z,0-9</option>
 			<option value="3">Remove all【…】 just before 「.</option>
+			<option value="4">Remove up to 9 jap symbols before 「.</option>
+			<option value="7">Remove up to 9 jap symbols after 」.</option>
 		</select>
 	</label>
 	<label>
@@ -861,6 +863,8 @@ const possibleColorThemes = Object.freeze(
 const REMOVE_NAMES_NEVER = 1
 const REMOVE_NAMES_EXCEPT_FOR_NO_AND_LETTER_AND_DIGITS = 2
 const REMOVE_NAMES_ALWAYS = 3
+const REMOVE_NAMES_ALL_BEFORE_QUOTE = 4
+const REMOVE_NAMES_ALL_AFTER_QUOTE = 7
 
 const settings = {
 	DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED: 260,
@@ -2039,7 +2043,7 @@ const fixSugoiBackendAnswer = window.f = (answer, textSource) =>
 {
 	//if (answer.includes('full'))
 		//console.log(window.a=answer, window.b=textSource)
-	if (!answer.trim() || !textSource.trim()) return ''
+	if (!answer.trim() || !(textSource || '').trim()) return ''
 	if (!textSource.startsWith('「') && answer.startsWith('<unk>')) answer = answer.slice(5)
 	answer = answer
 	.replace(/<unk>([\s…]*[A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk><unk>([\s…]*[A-ZÄËÖÜÏÁÉÓÚÍ][^<]+)<unk>["”]?$/, '「$1」\n「$2」')
@@ -2306,7 +2310,7 @@ setInterval(async () => {
 		const t = Date.now()
 		const retryIn = 1000
 		const addToCacheAndLog = async (res, isItTheLatest) => {
-			console.log('addToCacheAndLog(textSource=%O res=%O t=%O isItTheLatest=%O)', textSource, res, t, isItTheLatest)
+			//console.log('addToCacheAndLog(textSource=%O res=%O t=%O isItTheLatest=%O)', textSource, res, t, isItTheLatest)
 			if (db)
 			{
 				//console.log('2 db.l add `%O`', textSource)
@@ -2663,12 +2667,19 @@ setInterval(async () => {
 
 
 window.fixText = (text) => {
-	text = text.trim()
+	text = text.replace(/^【名前】/, '').trim()
 	if (!text) return
 	if (/http|\.replace\(|\.test\(|const\s|ffmpeg|#include|#define/i.test(text)) return
-	if (text.includes('0000/00/00')) return
-	if (/20\d\d\.\d\d\/\d\d \d\d:\d\d\.\d\d/.test(text)) return
-	if (text.includes('???? ??/??シーン')) return
+	if (text.includes('0000/00/00')) return // quick forward jump in Navel's Tsuki ni Yorisou Otome no Sahou
+	if (/^\d\d\d\d\/\d\d\/\d\d \d\d:\d\d[「（]/.test(text)) return
+	if (text.includes('----/--/-- --:--')) return // save button in Sakura Mau Otome no Rondo
+	if (text.endsWith('１２３４５６７８９０１２３４５６７８９０')) return // menu in Sakura Mau Otome no Rondo
+	if (/20\d\d\.\d\d\/\d\d \d\d:\d\d\.\d\d/.test(text)) return // quick forward jump in Navel's Tsuki ni Yorisou Otome no Sahou
+	if (/^[「」]+$/.test(text)) return
+//???? ??/??８月中旬シーン
+//???? ??/??シーン
+	if (text.startsWith('???? ??/??')) return // quick forward jump in Navel's Tsuki ni Yorisou Otome no Sahou
+	//if (text === '【名前】') return // quick forward jump in Navel's Tsuki ni Yorisou Otome no Sahou
 	//console.log('step4')
 	if (settings.REMOVE_NAMES === REMOVE_NAMES_NEVER)
 	{
@@ -2678,16 +2689,24 @@ window.fixText = (text) => {
 	{//幼少時代の遊星】「ぼくがこんな目にあうって、わかってたでしょ！　なんでぼくを産んじゃったの！　お母さまのばかっ！」
 		// todo: what about 【ユルシュール】『毛が？　毛がなんですの？　ルナが毛の処理でも怠ってボーボーですの？　はしたない女ですわね。まるで日本の白ウサギですわ、オホホホ』
 		if (settings.REMOVE_NAMES === REMOVE_NAMES_EXCEPT_FOR_NO_AND_LETTER_AND_DIGITS)
-		{
-			text = text.replace(/【(?:[一-龠]|(?!の)[ぁ-ゔ]|[ァ-ヴー]|[ヶ々〆〤]){1,9}】\s*「/ug, '\n「').trim()
-			text = text.replace(/(^|[。！？…」])(?:[一-龠]|(?!の)[ぁ-ゔ]|[ァ-ヴー]|[ヶ々〆〤]){1,9}】\s*「/ug, '$1\n「').trim()
+		{//不動
+			text = text.replace(/【(?:[一-龠]|(?!の|産屋)[ぁ-ゔ]|[ァ-ヴー]|[ヶ々〆〤]){1,9}】\s*「/ug, '\n「').trim()
+			text = text.replace(/(^|[。！？…」])(?:[一-龠]|(?!の|産屋)[ぁ-ゔ]|[ァ-ヴー]|[ヶ々〆〤]){1,9}】\s*「/ug, '$1\n「').trim()
 			text = text.replace(/(^|[。！？…」])((?:[一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[ヶ々〆〤]|[ａ-ｚ]|[Ａ-Ｚ]|[０-９]){1,9})】\s*「/ug, '$1\n【$2】「').trim()
 			//text = text.replace(/(^|[。！？…」])((?:[一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[ヶ々〆〤]){1,9})】\s*「/ug, '$1\n「').trim()
 		}
-		else if (settings.REMOVE_NAMES === REMOVE_NAMES_ALWAYS)
+		else if (settings.REMOVE_NAMES === REMOVE_NAMES_ALWAYS || settings.REMOVE_NAMES === REMOVE_NAMES_ALL_BEFORE_QUOTE)
 		{
 			text = text.replace(/【[^】]{1,9}】\s*「/ug, '\n「').trim()
 			text = text.replace(/(^|[。！？…」])((?:[一-龠]|[ぁ-ゔ]|[ァ-ヴー]|[ヶ々〆〤]|[ａ-ｚ]|[Ａ-Ｚ]|[０-９]){1,9})】\s*「/ug, '$1\n「').trim()
+		}
+		if (settings.REMOVE_NAMES === REMOVE_NAMES_ALL_BEFORE_QUOTE)
+		{
+			text = text.replace(/^(?:[一-龠]|(?!の|産屋)[ぁ-ゔ]|[ァ-ヴー]|[ヶ々〆〤]){1,9}(?=「)/, '')
+		}
+		else if (settings.REMOVE_NAMES === REMOVE_NAMES_ALL_AFTER_QUOTE)
+		{
+			text = text.replace(/」(?:[一-龠]|(?!の|産屋)[ぁ-ゔ]|[ァ-ヴー]|[ヶ々〆〤]){1,9}$/, '」')
 		}
 		//大蔵遊星】「銃を捨ててください」   ,,,,,,,      家庭教師Ａ】「遊星君、五歳にもなってこんな問題もできないのですか。お仕置きが足りないようですね」
 	}
@@ -2773,7 +2792,7 @@ window.fixText = (text) => {
 		return
 	}*/
 	if (/セーブ画面へ移動します|ゲームを終了します/.test(onlyJapSymbols)) return // buttons' tooltips
-	
+
 	if (onlyJapSymbols.length > settings.DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED) return
 	if (text.includes('」') && !text.includes('「'))
 	{
