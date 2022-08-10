@@ -210,7 +210,7 @@
 <br>by clipboard-inserter extension.
 <br>When you insert, interface will change: zen mode will be activated (invisible scrollbar for windows with ≤599px width, no README, etc.).
 <br>Settings are at the bottom of the page.
-<br>The source code of this page was <a href="https://github.com/arzeth/sugoi-web/commits/main" target="blank">last updated</a> at 2022-08-10T12:35:32+00:00
+<br>The source code of this page was <a href="https://github.com/arzeth/sugoi-web/commits/main" target="blank">last updated</a> at 2022-08-10T13:06:32+00:00
 </b></i>
 <br>
 <h3>Screenshots</h3>
@@ -705,6 +705,9 @@ if (!isSessionStorageAvailable && !isLocalStorageAvailable) document.querySelect
 else if (!isLocalStorageAvailable) document.querySelector('.thewarning').innerHTML = 'Can\'t use localStorage, therefore all logs and cache will be lost upon closing the browser'
 else if (location.protocol === 'file:') document.querySelector('.thewarning').innerHTML = 'Since you are running locally: if the file path changes, then all log and cache will be lost.'
 
+// About `cacheInRam`: either it is empty (MAX_CACHE_SIZE=0) or always contains everything (MAX_CACHE_SIZE>0)
+const cacheInRam = new Map()
+
 const availableNonRamStorages = []
 if (isLocalStorageAvailable)   availableNonRamStorages.push(localStorage)
 if (isSessionStorageAvailable) availableNonRamStorages.push(sessionStorage)
@@ -935,8 +938,8 @@ fillTheFormValues()
 document.querySelector('.resetSettingsButton').onclick = () => {
 	if (confirm('Really reset the Sugoi\'s web frontend\'s settings'))//, forget everything and reload this page?'))
 	{
-		localStore.deleteItem('sugoi__settings')
-		sessionStore.deleteItem('sugoi__settings')
+		localStorage.deleteItem('sugoi__settings')
+		sessionStorage.deleteItem('sugoi__settings')
 		/*let localStorageSettings = localStore.getItem('sugoi__settings')
 		try {localStorage.clear();localStore.setItem('sugoi__settings', localStorageSettings)} catch (e) {}
 		let sessionStorageSettings = sessionStore.getItem('sugoi__settings')
@@ -1423,7 +1426,7 @@ const removeEarilestLogMessages = async (howMany, __chch) => {
 	else
 	{
 		__chch = __chch || sugoiLog.children // TODO in the future: change to ||=
-		const chLength = ch.length
+		const chLength = __chch.length
 		howMany = (
 			howMany === void 0
 			? chLength - settings.MAX_LOG_SIZE
@@ -1432,7 +1435,7 @@ const removeEarilestLogMessages = async (howMany, __chch) => {
 		if (!(howMany > 0)) return
 		for (let i = chLength - 1; i >= chLength - howMany; i--)
 		{
-			sugoiLog.removeChild(ch[i])
+			sugoiLog.removeChild(__chch[i])
 		}
 	}
 	if (howMany > 0)
@@ -1715,7 +1718,7 @@ const addLogMessageToDom = (
 					else if (key.startsWith(dbLogKeyPrefix))
 					{
 						const [src, res] = (() => {
-							if (store[key].slice(0,3) === '$J$')
+							if (store[key]?.slice(0,3) === '$J$')
 							{
 								try {
 									return JSON.parse(store[key].slice(3))
@@ -2148,8 +2151,7 @@ const enqueue = (text, el) => {
 	queue.push(text)
 	lastTimeQueued = curT
 }
-// About `cacheInRam`: either it is empty (MAX_CACHE_SIZE=0) or always contains everything (MAX_CACHE_SIZE>0)
-const cacheInRam = new Map()
+
 let locked = false
 const wait = async (ms) => {
 	return new Promise(resolve => {
@@ -2260,7 +2262,7 @@ setInterval(async () => {
 	}
 	//deeplGoogle-SugoiEnd
 	const startsWithSpace = abc[abc.length - 1]?.[0] === ' '
-	const textSource = startsWithSpace ? abc[abc.length - 1].trim() : abc[abc.length - 1]
+	const textSource = startsWithSpace ? abc[abc.length - 1]?.trim() : abc[abc.length - 1]
 	abc.length = 0 // free RAM
 	//console.log('req')
 	if (!textSource/* || textSource === window.lastTranslatedTextSource*/)
