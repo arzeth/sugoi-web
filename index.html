@@ -204,177 +204,35 @@
 <body>
 <div class="theerror">Please enable JavaScript in your web browser's settings.</div>
 <script>document.querySelector('.theerror').innerHTML = 'Your browser is too old, nothing will work here.'</script>
-<div class="readme">
-<div class="thewarning"></div>
-<i><b>Nothing was inserted yet (the textarea is between this README and the settings in the bottom)
-<br>by clipboard-inserter extension.
-<br>When you insert, interface will change: zen mode will be activated (invisible scrollbar for windows with ≤599px width, no README, etc.).
-<br>Settings are at the bottom of the page.
-<br>The source code of this page was <a href="https://github.com/arzeth/sugoi-web/commits/main" target="blank">last updated</a> at 2022-08-10T13:06:32+00:00
-</b></i>
-<br>
-<h3>Screenshots</h3>
-(Linux) Browser's window can be made floating by pressing the hotkey in i3 WM/Sway WM (default: meta+shift+space), then be resized with meta+rightMouseButton, then be moved with meta+leftMouseButton.
-<br>(Linux) Browser's window can be made (not in Wayland) transparent (70%) with <code>picom --opacity-rule='70:name *= "Su''goi-Jap"'</code>
-<a href="https://arzet.cf/scr/2022-03-23T23:39:36,549736964+0500_1920x1080.webp" target="_blank">White theme</a> (<a href="https://vndb.org/v1322" target="_blank">Tenshin Ranman Lucky or Unlucky!?</a>; upscaling 720p→1080p with <a href="https://github.com/arzeth/cdmpv" target="_blank">cdmpv</a> (hotkey a, then hotkey shift+4))
-<br><a href="https://arzet.cf/scr/2022-03-24T00:33:53,903930931+0500_1920x1080.webp" target="_blank">Black theme</a> (<a href="https://vndb.org/v1322" target="_blank">Tenshin Ranman Lucky or Unlucky!?</a>; upscaling 720p→1080p with <a href="https://github.com/arzeth/cdmpv" target="_blank">cdmpv</a> (hotkey a, then hotkey shift+4))
-<br>(Linux only, i3/Sway only, Chromium only) <a href="https://arzet.cf/scr/2022-03-24T01:49:10,944975768+0500_1920x1080.webp" target="_blank">[Screenshot]</a> Tabs/etc. can be hidden by pressing F11 (Chromium's hotkey), then meta+f (exits the fullscreen, that's i3's hotkey). Chromium will continue (mistakenly) think it is still in fullscreen, so it won't display unneccesary elements.
-<br>
-<h3>How to automatically move text from CTRL+C/V to here:</h3>
-If you don't have clipboard-inserter, then get it from here:
-<br>
-<!--<div class="firefoxOnlyLink">-->
-	<a target="_blank" href="https://addons.mozilla.org/firefox/addon/clipboard-inserter/">
-		https://addons.mozilla.org/firefox/addon/clipboard-inserter/
-	</a> (works fine even locally = file://)
-<!-- </div> -->
-<br>
-<!-- <div class="chromeOnlyLink"> -->
-	<a target="_blank" href="https://chrome.google.com/webstore/detail/clipboard-inserter/deahejllghicakhplliloeheabddjajm">
-		https://chrome.google.com/webstore/detail/clipboard-inserter/deahejllghicakhplliloeheabddjajm
-	</a> (<span style="color:#f00">doesn't work locally, i.e. file:///</span>)
-<!-- </div> -->
-<br>
-(github: <a target="_blank" href="https://github.com/kmltml/clipboard-inserter">
-	https://github.com/kmltml/clipboard-inserter</a>)
-<br><b>Then EVERY TIME you reload this page, MAKE SURE to click the icon (sometimes two clicks are needed), so that there was green "ON" on the icon.</b>
-<br>With both Firefox and Chrome, it seems there's some kind of bug in the above extension,
-<br>so the extension's CPU usage gradually becomes high despite not doing anything.
-<br>This can be "fixed" by going to the <i>Addons</i> page (about:addons) and <i>Disable</i>&amp;<i>Enable</i> it every 1-2 thousand of CTRL+C/CTRL+V.
-<br>Also the extension has a memory leak that can be fixed by clicking on the icon (on, off).
-<br>
-<br><b>By default clipboard-inserter has the poll interval of 300ms,
-<br>i.e. it checks the Copy/Paste Clipboard Buffer for updates every <span style="color:#f00">300ms</span>,
-<br>which means a message will be skipped if you press Enter two times very quickly.</b><br/>
-<br>This number can be changed in the extension's settings. Probably 100 ms is good.
-<br>Also decreasing by 200 ms means that the translation request is sent to Sugoi-Japanese-Translator by 1-199ms earlier.
-<br>The disadvantage is extension's CPU usage increases proportionally:
-<br>On Ryzen 2600, 300 ms is 1.5% CPU core usage (only one CPU thread is used). 100 ms is 4.5%.
-<br>
-<br>
-<h3>How to automatically move text from a VN to CTRL+C/V</h3>
-Use
-<a target="_blank" href="https://github.com/Artikash/Textractor/releases">
-	https://github.com/Artikash/Textractor/releases
-</a>
-(for me it works perfectly in Wine)
-<br>Don't forget to update it sometimes to get new hooks.
-<br>
-<h3>Must-have Extension</h3>
-When you feel that a wrong word is chosen by the neural network (it will often happen because it doesn't know the full context.), you have to use:
-<br>
-<a target="_blank" href="https://chrome.google.com/webstore/detail/10ten-japanese-reader-rik/pnmaklegiibbioifkmfkgpfnmdehdfan">
-https://chrome.google.com/webstore/detail/10ten-japanese-reader-rik/pnmaklegiibbioifkmfkgpfnmdehdfan
-</a>
-<br>
-<a target="_blank" href="https://addons.mozilla.org/firefox/addon/10ten-ja-reader/">
-https://addons.mozilla.org/firefox/addon/10ten-ja-reader/
-</a>
-<br>
-(github: <a target="_blank" href="https://github.com/birchill/10ten-ja-reader">https://github.com/birchill/10ten-ja-reader</a>)
-<br>I.e. you just hover your mouse over a character, and then a character's and/or word's meanings appear in English and also in your browser's language if such dictionary exist.
-<br>If nothing happens upon hovering, click on the extension's icon (black background=enabled, grey=disabled).
-<br>On the icon there is a number "10" in case you can't find it.
-<br>It has many settings, you can even enable romaji (i.e. latin script).
-<br>If you've installed this extension just now, then refresh this page.
-<br>
-<br>It also shows tones unlike Rikaikun. In short: when there is a line above a character, then use high tone, else low tone. If you have difficulties with using tones, then use a low/high volume instead of low/high tone <i>for now</i>.
-<br>
-<br>Or you can use another similar extension <a target="_blank" href="https://foosoft.net/projects/yomichan/">Yomichan</a>, but don't forget to add "Kanjium (Pitch dictionary)".
-<br>
-<h3>Notes</h3>
-Names in ~16% cases are translated wrong (because there are multiple readings) or sometimes they become nouns, e.g. "Sora" might become "sky".
-<br>
-Also use
-<a target="_blank" href="https://jlptsensei.com/complete-jlpt-grammar-list/">
-	https://jlptsensei.com/complete-jlpt-grammar-list/</a> 
-(rules from all levels sorted by alphabet) when the above extension isn't enough. If you already played tens of <i>voiced</i> VNs, you would recognise >80% of them.
-<br>If you decide to learn some Japanese <i>grammar</i>, start with <a target="_blank" href="https://jlptsensei.com/jlpt-n5-grammar-list/">N5 level</a>, then N4,... (4-5 minutes to fully comprehend any rule)
-<br>The initial main motivation could be for you is that not all emotional particles can be translated into English unlike Lojban (<a target="_blank" href="https://lojban.github.io/cll/">ref. grammar</a>, <a target="_blank" href="https://vlasisku.lojban.org/cmavo">particles</a>).
-<br>Also you can use <a target="_blank" href="https://www.duolingo.com/">
-	https://www.duolingo.com/
-</a> to learn katakana, hiragana, basic grammar and vocabulary (for me Duolingo is like a game unlike e.g. Anki).
-<br>Some basic (i.e. N5) grammar and vocabulary are necessary (but still not enough though) to play e.g. twin loli gods' route in Akeiro Kaikitan where they two speak one-two syllables by turns like they have a shared mind. Without them, you won't know where the words begin and/or end.
-<br>If you're lazy and newbie, then at least pay attention only to the grammar terms on jlptsensei.com mentioned above. E.g. wa="when talking about X"=set context, ga=subject, o=<i>o</i>bject, no≈"of", <a href="https://jlptsensei.com/learn-japanese-grammar/%e3%81%a8%e3%81%84%e3%81%86%e3%81%93%e3%81%a8-to-iu-koto-meaning/">to iu koto</a>, <a target="_blank" href="https://jlptsensei.com/learn-japanese-grammar/%E3%81%9E-%E3%81%9C-zo-ze-ending-particle-meaning/">zo</a>, -te, to (quote, "and"), etc., etc., etc..
-<br>
-<br>With all of the above you are ready to sensibly consume machine translation, congratulations.
-<br>
-<br>The code in this web frontend has built-in deduplication ("[OEU][OEU" shall become "OEU]"), but very rarely the original source also has duplication on purpose (sentence "sukisuki" mistakenly would become "suki" and only then be translated).
-<!--When the source is deduplicated, the line is dashed - - - - instead of being solid <span style="letter-spacing: -6px">————</span>&nbsp;&nbsp;.-->
-<br>
-<br><b>You can save this page for offline usage.</b> But don't forget to update it sometimes by visiting & Ctrl+s <a
-href="https://arzeth.github.io/sugoi-web/">https://arzeth.github.io/sugoi-web/</a>
-<h3>Links related to Sugoi-Japanese-Translator itself</h3>
-<a href="https://www.youtube.com/watch?v=r8xFzVbmo7k">https://www.youtube.com/watch?v=r8xFzVbmo7k</a>
-<br/><a href="https://discord.gg/XFbWSjMHJh">https://discord.gg/XFbWSjMHJh</a>
-<h3>Linux (the easiest way: with Wine)</h3>
-Just in case change
-<br/>host='0.0.0.0'
-<br/>to
-<br/>host='localhost'
-<br/>in
-<br/>backendServer/Program-Backend/Sugoi-Translator-Offline/offlineTranslation/fairseq/flaskServer.py
-<br/>(If you don't change, then you would likely need to specify 192.168.0.5 or something in the settings)
-<br/>
-<br/>Launch:
-<br/>wine 'Sugoi-Translator-Offline (click here).bat'
-<br/>The UI will close with "Uncaught exception" in 10-20 secs, but don't pay attention to that,
-<br/>because there's still the translation server running.
 
-If you are on Linux, then first check that the Sugoi's backend works:
-<br>
-<code>
-curl -H 'Content-Type: application/json' --data-raw '{"message":"translate sentences","content":"いかにも噂話というパターンではあったが、とにかく、多くの人が知っていた。"}' http://localhost:14366/
-</code>
-The result should be
-<code>
-"It was just a rumor, but in any case, a lot of people knew."
-</code>
-The quotes "" are because the output is a JSON string.
-<h3>Linux (without Wine)</h3>
-<a href="https://git.sr.ht/~asdf/sugee">https://git.sr.ht/~asdf/sugee</a>
-<br>Python 3.10 is not supported by PyTorch yet (see https://github.com/pytorch/pytorch/issues/66424).
-<br>So if you already have Python 3.10, then use pyenv to also have Python 3.9.
-<h3>Linux (misc. info)</h3>
-You can use this upscaler (quality is better than Magpie) for most VNs:
-<br><a target="_blank" href="https://github.com/arzeth/cdmpv">https://github.com/arzeth/cdmpv</a>
-<br>A much better overengineered Linux-only universal upscaler/first-ever-universal-upframerater will be later.
-
-
-<hr/>
-</div>
-
+<div class="readme"><i><b>
+	Nothing was inserted yet (the textarea is between this README and the settings in the bottom)
+	<br>by clipboard-inserter extension.
+	<br>When you insert, interface will change: zen mode will be activated (invisible scrollbar for windows with ≤599px width, no README, etc.).
+	<br>Settings are at the bottom of the page.
+	<br>The source code of this page was <a href="https://github.com/arzeth/sugoi-web/commits/main" target="blank">last updated</a> at 2022-08-10T13:06:32+00:00
+	<br>The latest models (i.e. file "big.pretrain.pt" which should be placed in $somepath/fairseq/japaneseModel/) are:
+	<br>* <a target="_blank" href="https://drive.google.com/file/d/1Q_ASUD-6PcKIQ1S5_NwHnvxL22rW3HT3/view?usp=sharing">Offline Model 3.3</a> (2022-06-25, 0.5 GB .rar)
+	<br>* <a target="_blank" href="https://drive.google.com/file/d/1nw7hOUv4vnPbWJzkQ_Cgohok5GLO3Xrx/view?usp=sharing">Fusion Model 1.0</a> (2022-06-01, 0.5 GB .rar, @MingShiba: "manga score is a bit lower, but VN and LN score is substantially higher")
+	<br>Announcements: <a target="_blank" href="https://discord.com/channels/778778890239344641/786999051224744016">https://discord.com/channels/778778890239344641/786999051224744016</a>
+</b></i></div>
 
 <div>
 	<!--placeholder="Enter the text in 日本語"-->
-<textarea
-	class="sugoi__source"
-	rows="4"
-	data-minrows="1"
-	placeholder="Nothing was pasted yet"
-	lang="jp"
->
-</textarea><button class="sugoi__translate-button">Translate</button><div class="sugoi__result" lang="en"></div><div class="sugoi__log"><!--
-	<div class="sugoi__log__message">
-		<div class="sugoi__log__message__source">
-			いかにも噂話というパターンではあったが、とにかく、多くの人が知っていた。
-		</div><div class="sugoi__log__message__result">
-			aoeoa aoe aolr teoalrtrl aotrlt orltrlt aoerltl aorelrt aorteao rterl tao
-		</div>
-	</div><div class="sugoi__log__message">
-		<div class="sugoi__log__message__source">
-			いかにも噂話というパターンではあったが、とにかく、多くの人が知っていた。
-		</div><div class="sugoi__log__message__result">
-			aoeoa aoe aolr teoalrtrl aotrlt orltrlt aoerltl aorelrt aorteao rterl tao
-		</div>
-	</div><div class="sugoi__log__message">
-		<div class="sugoi__log__message__source">
-			いかにも噂話というパターンではあったが、とにかく、多くの人が知っていた。
-		</div><div class="sugoi__log__message__result">
-			aoeoa aoe aolr teoalrtrl aotrlt orltrlt aoerltl aorelrt aorteao rterl tao
-		</div>
-	</div>-->
+	<textarea
+		class="sugoi__source"
+		rows="4"
+		data-minrows="1"
+		placeholder="Nothing was pasted yet"
+		lang="jp"
+	>
+	</textarea><button class="sugoi__translate-button">Translate</button><div class="sugoi__result" lang="en"></div><div class="sugoi__log"></div>
+
+
 </div>
+
+<hr/>
+
 <form class="sugoi__settings" method="POST">
 	<button type="button" class="cleanAllLog-Button">Clean all log (size=<span class="cleanAllLog-Button__num"></span>)</button>
 	<button type="button" class="cleanAllLogExcept-Button">Clean all log except the N newest msgs, where N≥0 and N=</button>
@@ -503,8 +361,145 @@ You can use this upscaler (quality is better than Magpie) for most VNs:
 </form>
 
 
-</div>
 
+
+
+
+
+
+<div class="readme">
+	<div class="thewarning"></div>
+	<br>
+	<h3>Screenshots</h3>
+	(Linux) Browser's window can be made floating by pressing the hotkey in i3 WM/Sway WM (default: meta+shift+space), then be resized with meta+rightMouseButton, then be moved with meta+leftMouseButton.
+	<br>(Linux) Browser's window can be made (not in Wayland) transparent (70%) with <code>picom --opacity-rule='70:name *= "Su''goi-Jap"'</code>
+	<a href="https://arzet.cf/scr/2022-03-23T23:39:36,549736964+0500_1920x1080.webp" target="_blank">White theme</a> (<a href="https://vndb.org/v1322" target="_blank">Tenshin Ranman Lucky or Unlucky!?</a>; upscaling 720p→1080p with <a href="https://github.com/arzeth/cdmpv" target="_blank">cdmpv</a> (hotkey a, then hotkey shift+4))
+	<br><a href="https://arzet.cf/scr/2022-03-24T00:33:53,903930931+0500_1920x1080.webp" target="_blank">Black theme</a> (<a href="https://vndb.org/v1322" target="_blank">Tenshin Ranman Lucky or Unlucky!?</a>; upscaling 720p→1080p with <a href="https://github.com/arzeth/cdmpv" target="_blank">cdmpv</a> (hotkey a, then hotkey shift+4))
+	<br>(Linux only, i3/Sway only, Chromium only) <a href="https://arzet.cf/scr/2022-03-24T01:49:10,944975768+0500_1920x1080.webp" target="_blank">[Screenshot]</a> Tabs/etc. can be hidden by pressing F11 (Chromium's hotkey), then meta+f (exits the fullscreen, that's i3's hotkey). Chromium will continue (mistakenly) think it is still in fullscreen, so it won't display unneccesary elements.
+	<br>
+	<h3>How to automatically move text from CTRL+C/V to here:</h3>
+	If you don't have clipboard-inserter, then get it from here:
+	<br>
+	<!--<div class="firefoxOnlyLink">-->
+		<a target="_blank" href="https://addons.mozilla.org/firefox/addon/clipboard-inserter/">
+			https://addons.mozilla.org/firefox/addon/clipboard-inserter/
+		</a> (works fine even locally = file://)
+	<!-- </div> -->
+	<br>
+	<!-- <div class="chromeOnlyLink"> -->
+		<a target="_blank" href="https://chrome.google.com/webstore/detail/clipboard-inserter/deahejllghicakhplliloeheabddjajm">
+			https://chrome.google.com/webstore/detail/clipboard-inserter/deahejllghicakhplliloeheabddjajm
+		</a> (<span style="color:#f00">doesn't work locally, i.e. file:///</span>)
+	<!-- </div> -->
+	<br>
+	(github: <a target="_blank" href="https://github.com/kmltml/clipboard-inserter">
+		https://github.com/kmltml/clipboard-inserter</a>)
+	<br><b>Then EVERY TIME you reload this page, MAKE SURE to click the icon (sometimes two clicks are needed), so that there was green "ON" on the icon.</b>
+	<br>With both Firefox and Chrome, it seems there's some kind of bug in the above extension,
+	<br>so the extension's CPU usage gradually becomes high despite not doing anything.
+	<br>This can be "fixed" by going to the <i>Addons</i> page (about:addons) and <i>Disable</i>&amp;<i>Enable</i> it every 1-2 thousand of CTRL+C/CTRL+V.
+	<br>Also the extension has a memory leak that can be fixed by clicking on the icon (on, off).
+	<br>
+	<br><b>By default clipboard-inserter has the poll interval of 300ms,
+	<br>i.e. it checks the Copy/Paste Clipboard Buffer for updates every <span style="color:#f00">300ms</span>,
+	<br>which means a message will be skipped if you press Enter two times very quickly.</b><br/>
+	<br>This number can be changed in the extension's settings. Probably 100 ms is good.
+	<br>Also decreasing by 200 ms means that the translation request is sent to Sugoi-Japanese-Translator by 1-199ms earlier.
+	<br>The disadvantage is extension's CPU usage increases proportionally:
+	<br>On Ryzen 2600, 300 ms is 1.5% CPU core usage (only one CPU thread is used). 100 ms is 4.5%.
+	<br>
+	<br>
+	<h3>How to automatically move text from a VN to CTRL+C/V</h3>
+	Use
+	<a target="_blank" href="https://github.com/Artikash/Textractor/releases">
+		https://github.com/Artikash/Textractor/releases
+	</a>
+	(for me it works perfectly in Wine)
+	<br>Don't forget to update it sometimes to get new hooks.
+	<br>
+	<h3>Must-have Extension</h3>
+	When you feel that a wrong word is chosen by the neural network (it will often happen because it doesn't know the full context.), you have to use:
+	<br>
+	<a target="_blank" href="https://chrome.google.com/webstore/detail/10ten-japanese-reader-rik/pnmaklegiibbioifkmfkgpfnmdehdfan">
+	https://chrome.google.com/webstore/detail/10ten-japanese-reader-rik/pnmaklegiibbioifkmfkgpfnmdehdfan
+	</a>
+	<br>
+	<a target="_blank" href="https://addons.mozilla.org/firefox/addon/10ten-ja-reader/">
+	https://addons.mozilla.org/firefox/addon/10ten-ja-reader/
+	</a>
+	<br>
+	(github: <a target="_blank" href="https://github.com/birchill/10ten-ja-reader">https://github.com/birchill/10ten-ja-reader</a>)
+	<br>I.e. you just hover your mouse over a character, and then a character's and/or word's meanings appear in English and also in your browser's language if such dictionary exist.
+	<br>If nothing happens upon hovering, click on the extension's icon (black background=enabled, grey=disabled).
+	<br>On the icon there is a number "10" in case you can't find it.
+	<br>It has many settings, you can even enable romaji (i.e. latin script).
+	<br>If you've installed this extension just now, then refresh this page.
+	<br>
+	<br>It also shows tones unlike Rikaikun. In short: when there is a line above a character, then use high tone, else low tone. If you have difficulties with using tones, then use a low/high volume instead of low/high tone <i>for now</i>.
+	<br>
+	<br>Or you can use another similar extension <a target="_blank" href="https://foosoft.net/projects/yomichan/">Yomichan</a>, but don't forget to add "Kanjium (Pitch dictionary)".
+	<br>
+	<h3>Notes</h3>
+	Names in ~16% cases are translated wrong (because there are multiple readings) or sometimes they become nouns, e.g. "Sora" might become "sky".
+	<br>
+	Also use
+	<a target="_blank" href="https://jlptsensei.com/complete-jlpt-grammar-list/">
+		https://jlptsensei.com/complete-jlpt-grammar-list/</a> 
+	(rules from all levels sorted by alphabet) when the above extension isn't enough. If you already played tens of <i>voiced</i> VNs, you would recognise >80% of them.
+	<br>If you decide to learn some Japanese <i>grammar</i>, start with <a target="_blank" href="https://jlptsensei.com/jlpt-n5-grammar-list/">N5 level</a>, then N4,... (4-5 minutes to fully comprehend any rule)
+	<br>The initial main motivation could be for you is that not all emotional particles can be translated into English unlike Lojban (<a target="_blank" href="https://lojban.github.io/cll/">ref. grammar</a>, <a target="_blank" href="https://vlasisku.lojban.org/cmavo">particles</a>).
+	<br>Also you can use <a target="_blank" href="https://www.duolingo.com/">
+		https://www.duolingo.com/
+	</a> to learn katakana, hiragana, basic grammar and vocabulary (for me Duolingo is like a game unlike e.g. Anki).
+	<br>Some basic (i.e. N5) grammar and vocabulary are necessary (but still not enough though) to play e.g. twin loli gods' route in Akeiro Kaikitan where they two speak one-two syllables by turns like they have a shared mind. Without them, you won't know where the words begin and/or end.
+	<br>If you're lazy and newbie, then at least pay attention only to the grammar terms on jlptsensei.com mentioned above. E.g. wa="when talking about X"=set context, ga=subject, o=<i>o</i>bject, no≈"of", <a href="https://jlptsensei.com/learn-japanese-grammar/%e3%81%a8%e3%81%84%e3%81%86%e3%81%93%e3%81%a8-to-iu-koto-meaning/">to iu koto</a>, <a target="_blank" href="https://jlptsensei.com/learn-japanese-grammar/%E3%81%9E-%E3%81%9C-zo-ze-ending-particle-meaning/">zo</a>, -te, to (quote, "and"), etc., etc., etc..
+	<br>
+	<br>With all of the above you are ready to sensibly consume machine translation, congratulations.
+	<br>
+	<br>The code in this web frontend has built-in deduplication ("[OEU][OEU" shall become "OEU]"), but very rarely the original source also has duplication on purpose (sentence "sukisuki" mistakenly would become "suki" and only then be translated).
+	<!--When the source is deduplicated, the line is dashed - - - - instead of being solid <span style="letter-spacing: -6px">————</span>&nbsp;&nbsp;.-->
+	<br>
+	<br><b>You can save this page for offline usage.</b> But don't forget to update it sometimes by visiting & Ctrl+s <a
+	href="https://arzeth.github.io/sugoi-web/">https://arzeth.github.io/sugoi-web/</a>
+	<h3>Links related to Sugoi-Japanese-Translator itself</h3>
+	<a href="https://www.youtube.com/watch?v=r8xFzVbmo7k">https://www.youtube.com/watch?v=r8xFzVbmo7k</a>
+	<br/><a href="https://discord.gg/XFbWSjMHJh">https://discord.gg/XFbWSjMHJh</a>
+	<h3>Linux (the easiest way: with Wine)</h3>
+	Just in case change
+	<br/>host='0.0.0.0'
+	<br/>to
+	<br/>host='localhost'
+	<br/>in
+	<br/>backendServer/Program-Backend/Sugoi-Translator-Offline/offlineTranslation/fairseq/flaskServer.py
+	<br/>(If you don't change, then you would likely need to specify 192.168.0.5 or something in the settings)
+	<br/>
+	<br/>Launch:
+	<br/>wine 'Sugoi-Translator-Offline (click here).bat'
+	<br/>The UI will close with "Uncaught exception" in 10-20 secs, but don't pay attention to that,
+	<br/>because there's still the translation server running.
+	
+	If you are on Linux, then first check that the Sugoi's backend works:
+	<br>
+	<code>
+	curl -H 'Content-Type: application/json' --data-raw '{"message":"translate sentences","content":"いかにも噂話というパターンではあったが、とにかく、多くの人が知っていた。"}' http://localhost:14366/
+	</code>
+	The result should be
+	<code>
+	"It was just a rumor, but in any case, a lot of people knew."
+	</code>
+	The quotes "" are because the output is a JSON string.
+	<h3>Linux (without Wine)</h3>
+	<a href="https://git.sr.ht/~asdf/sugee">https://git.sr.ht/~asdf/sugee</a>
+	<br>Python 3.10 is not supported by PyTorch yet (see https://github.com/pytorch/pytorch/issues/66424).
+	<br>So if you already have Python 3.10, then use pyenv to also have Python 3.9.
+	<h3>Linux (misc. info)</h3>
+	You can use this upscaler (quality is better than Magpie) for most VNs:
+	<br><a target="_blank" href="https://github.com/arzeth/cdmpv">https://github.com/arzeth/cdmpv</a>
+	<br>A much better overengineered Linux-only universal upscaler/first-ever-universal-upframerater will be later.
+	
+	
+	<hr/>
+</div>
 
 
 
