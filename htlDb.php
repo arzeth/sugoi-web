@@ -2,8 +2,7 @@
 /*
 @author Arzet Ro, 2022 <arzeth0@gmail.com>
 
-@license CC0 (Creative Commons Zero v1.0 Universal) (i.e. Public Domain)
-https://creativecommons.org/publicdomain/zero/1.0/deed
+@license MIT No Attribution: https://spdx.org/licenses/MIT-0.html
 
 Source code: https://github.com/arzeth/sugoi-web
 */

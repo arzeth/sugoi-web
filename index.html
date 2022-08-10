@@ -4,8 +4,7 @@
 	<!--
 		@author Arzet Ro, 2022 <arzeth0@gmail.com>
 
-		@license CC0 (Creative Commons Zero v1.0 Universal) (i.e. Public Domain)
-		https://creativecommons.org/publicdomain/zero/1.0/deed
+		@license MIT No Attribution: https://spdx.org/licenses/MIT-0.html
 
 		Source code: https://github.com/arzeth/sugoi-web
 	-->
@@ -93,6 +92,7 @@
 		code {
 			font-family: 'Iosevka SS16', 'Iosevka', 'Pragmata Pro', 'PragmataPro', 'Fira Mono', monospace;
 			display: block;
+			white-space: pre;
 		}
 		html.firefox .chromeOnlylink {
 			display: none;
@@ -215,6 +215,7 @@
 	<br>* <a target="_blank" href="https://drive.google.com/file/d/1Q_ASUD-6PcKIQ1S5_NwHnvxL22rW3HT3/view?usp=sharing">Offline Model 3.3</a> (2022-06-25, 0.5 GB .rar)
 	<br>* <a target="_blank" href="https://drive.google.com/file/d/1nw7hOUv4vnPbWJzkQ_Cgohok5GLO3Xrx/view?usp=sharing">Fusion Model 1.0</a> (2022-06-01, 0.5 GB .rar, @MingShiba: "manga score is a bit lower, but VN and LN score is substantially higher")
 	<br>Announcements: <a target="_blank" href="https://discord.com/channels/778778890239344641/786999051224744016">https://discord.com/channels/778778890239344641/786999051224744016</a>
+	<br>If this web frontend doesn't work, then write me in Telegram: @arzet_ro
 </b></i></div>
 
 <div>
@@ -435,7 +436,7 @@
 	<br>It has many settings, you can even enable romaji (i.e. latin script).
 	<br>If you've installed this extension just now, then refresh this page.
 	<br>
-	<br>It also shows tones unlike Rikaikun. In short: when there is a line above a character, then use high tone, else low tone. If you have difficulties with using tones, then use a low/high volume instead of low/high tone <i>for now</i>.
+	<br>It also shows tones unlike Rikaikun. In short: when there is a line above a character, then use high tone, else low tone. If you have difficulties with pronouncing tones, then use a low/high volume instead of low/high tone <i>for now</i>, more info: <a target="_blank" href="https://www.youtube.com/watch?v=O6AoilGEers">https://www.youtube.com/watch?v=O6AoilGEers</a>.
 	<br>
 	<br>Or you can use another similar extension <a target="_blank" href="https://foosoft.net/projects/yomichan/">Yomichan</a>, but don't forget to add "Kanjium (Pitch dictionary)".
 	<br>
@@ -490,8 +491,20 @@
 	The quotes "" are because the output is a JSON string.
 	<h3>Linux (without Wine)</h3>
 	<a href="https://git.sr.ht/~asdf/sugee">https://git.sr.ht/~asdf/sugee</a>
-	<br>nice -n 19 python sugee/server.py
-	<br>CUDA: nice -n 19 python sugee/server.py --gpu
+	<br>On Arch Linux, downgrade python-antlr4 to 4.9.3-2:
+<code>
+mkdir /tmp/python-antlr4-4.9.3
+cd /tmp/python-antlr4-4.9.3
+wget https://raw.githubusercontent.com/arzeth/sugoi-web/main/python-antlr4/archlinux/PKGBUILD
+wget https://raw.githubusercontent.com/arzeth/sugoi-web/main/python-antlr4/archlinux/fix-tests.patch
+makepkg -si
+</code>
+	<br>and add python-antlr4 to /etc/pacman.conf's IgnorePkg=... to prevent it from upgrading.
+	<br>
+	<br>How to run:
+	<code>cd backendServer/Program-Backend/Sugoi-Translator-Offline/offlineTranslation/fairseq/</code>
+	<code>nice -n 19 python sugee/server.py</code>
+	If you have CUDA and want 3-5x more speed, then add <code style="display: inline">--gpu</code>
 	<h3>Linux (misc. info)</h3>
 	You can use this upscaler (quality is better than Magpie) for most VNs:
 	<br><a target="_blank" href="https://github.com/arzeth/cdmpv">https://github.com/arzeth/cdmpv</a>
