@@ -24,8 +24,12 @@
 			margin: 0;
 			padding: 0;
 		}
-		textarea {
-			line-height: 1.3;
+		textarea, /* settings */
+		.sugoi__source,
+		.sugoi__result,
+		.sugoi__log__message__source,
+		.sugoi__log__message__result {
+			line-height: 1.2;
 		}
 		/*html.COLOR_THEME-white {
 			background: #000;
@@ -338,6 +342,7 @@
 			<option value="black">Black</option>
 		</select>
 	</label>
+
 	<label>
 		(default=28.5, <i>cur=<span data-var="LASTMSG_SOURCE_FONTSIZE"></span></i>) Font size (px) for the last message's Japanese source text.
 		<input step="0.1" type="number" name="LASTMSG_SOURCE_FONTSIZE"/>
@@ -354,6 +359,25 @@
 		(default=18, <i>cur=<span data-var="LOG_RESULT_FONTSIZE"></span></i>) Font size (px) for a log message's translated text.
 		<input step="0.1" type="number" name="LOG_RESULT_FONTSIZE"/>
 	</label>
+
+
+	<label>
+		(default=1.2, <i>cur=<span data-var="LASTMSG_SOURCE_LINEHEIGHT"></span></i>) Line height for the last message's Japanese source text (1.2 means a line is 120% of font size; also possible: "20px", "2em").
+		<input type="text" name="LASTMSG_SOURCE_LINEHEIGHT"/>
+	</label>
+	<label>
+		(default=1.2, <i>cur=<span data-var="LASTMSG_RESULT_LINEHEIGHT"></span></i>) Line height for the last message's translated text.
+		<input type="text" name="LASTMSG_RESULT_LINEHEIGHT"/>
+	</label>
+	<label>
+		(default=1.2, <i>cur=<span data-var="LOG_SOURCE_LINEHEIGHT"></span></i>) Line height for a log message's Japanese source text.
+		<input type="text" name="LOG_SOURCE_LINEHEIGHT"/>
+	</label>
+	<label>
+		(default=1.2, <i>cur=<span data-var="LOG_RESULT_LINEHEIGHT"></span></i>) Line height for a log message's translated text.
+		<input type="text" name="LOG_RESULT_LINEHEIGHT"/>
+	</label>
+
 	<label>Custom CSS. In case you do make everything invisible, press F12 and remove the third &lt;style&gt; in &lt;head&gt; to be able to save the settings.
 		<textarea class="CUSTOM_CSS" name="CUSTOM_CSS" rows="3" data-minrows="3" data-maxrows="13"></textarea>
 	</label>
@@ -878,6 +902,9 @@ const REMOVE_NAMES_ALWAYS = 3
 const REMOVE_NAMES_ALL_BEFORE_QUOTE = 4
 const REMOVE_NAMES_ALL_AFTER_QUOTE = 7
 
+const DEFAULT_LINEHEIGHT = '1.2'
+const lineHeightMatchRegexp = /^\d+(?:\.+\d*)?(?:%|[a-z]+)?/
+
 const settings = {
 	DONT_DO_ANYTHING_IF_NUMBER_OF_JAP_SYMBOLS_EXCEED: 260,
 	MIN_DELAY_IN_MS_AFTER_UPDATING_THE_TEXT_SOURCE: 300,
@@ -901,10 +928,17 @@ const settings = {
 	SHOW_README: 1,
 	SHOW_SETTINGS_IN_ZEN_MODE: 0,
 	COLOR_THEME: 'white',
+
 	LASTMSG_SOURCE_FONTSIZE: 28.5,
 	LASTMSG_RESULT_FONTSIZE: 18,
 	LOG_SOURCE_FONTSIZE: 28.5,
 	LOG_RESULT_FONTSIZE: 18,
+
+	LASTMSG_SOURCE_LINEHEIGHT: DEFAULT_LINEHEIGHT,
+	LASTMSG_RESULT_LINEHEIGHT: DEFAULT_LINEHEIGHT,
+	LOG_SOURCE_LINEHEIGHT: DEFAULT_LINEHEIGHT,
+	LOG_RESULT_LINEHEIGHT: DEFAULT_LINEHEIGHT,
+
 	CUSTOM_CSS: '',
 	BACKEND_VERSION: 1, // this is used only to autoclean cache when version in localStorage/sessionStorage is smaller
 }
@@ -1206,6 +1240,41 @@ sugoiSettingsForm.onsubmit = function (e) {
 		{
 			alert('Let\'s hope you know what you are doing with the last message\'s font sizes set to 0.')
 		}
+		for (const x of [
+			'LASTMSG_SOURCE_LINEHEIGHT',
+			'LASTMSG_RESULT_LINEHEIGHT',
+			'LOG_SOURCE_LINEHEIGHT',
+			'LOG_RESULT_LINEHEIGHT',
+		])
+		{
+			settings[x] = settings[x]
+			.replace(/[,.]+/g, '.')
+			.replace(/\s+/g, '')
+			.toLowerCase()
+			.match(lineHeightMatchRegexp)
+			?.[0] || DEFAULT_LINEHEIGHT
+			const type = settings[x].match(/%|[a-z]+/)?.[0]
+			if (
+				!type
+				&
+				settings[x] > 3
+			)
+			{
+				settings[x] += 'px'
+			}
+			else if (
+				type === 'px'
+				&&
+				setting[x] > 0.001 && setting[x] <= 3
+			)
+			{
+				alert(
+					`changing ${x} from \`${settings[x]}\` supplied by you`
+					+ ` to \`${settings.replace('px', '')}\` because of the too low value`
+				)
+				settings[x] = settings.replace('px', '')
+			}
+		}
 		lastGotFromLocalStoreThing = newSettingsIncomingFromTheForm
 		localStoreSet('sugoi__settings', newSettingsIncomingFromTheForm)
 		syncSettingsLocked = false
@@ -1505,14 +1574,16 @@ setInterval(async () => {
 		? 'display: none;'
 		: ''
 	}
+	line-height: ${settings.LASTMSG_SOURCE_LINEHEIGHT.match(lineHeightMatchRegexp)?.[0] || DEFAULT_LINEHEIGHT};
 }
 .sugoi__result {
 	font-size: ${settings.LASTMSG_RESULT_FONTSIZE}px;
 	${
-		settings.LASTMSG_SOURCE_FONTSIZE < 1
+		settings.LASTMSG_SOURCE_FONTSIZE < 1 // not a typo
 		? 'padding-top: 10px;'
 		: ''
 	}
+	line-height: ${settings.LASTMSG_RESULT_LINEHEIGHT.match(lineHeightMatchRegexp)?.[0] || DEFAULT_LINEHEIGHT};
 }
 .sugoi__log {
 	${
@@ -1523,9 +1594,11 @@ setInterval(async () => {
 }
 .sugoi__log__message__source {
 	font-size: ${settings.LOG_SOURCE_FONTSIZE}px;
+	line-height: ${settings.LOG_SOURCE_LINEHEIGHT.match(lineHeightMatchRegexp)?.[0] || DEFAULT_LINEHEIGHT};
 }
 .sugoi__log__message__result {
 	font-size: ${settings.LOG_RESULT_FONTSIZE}px;
+	line-height: ${settings.LOG_RESULT_LINEHEIGHT.match(lineHeightMatchRegexp)?.[0] || DEFAULT_LINEHEIGHT};
 }
 ${
 	settings.LASTMSG_RESULT_FONTSIZE < 1
