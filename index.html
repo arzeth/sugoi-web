@@ -1248,12 +1248,12 @@ sugoiSettingsForm.onsubmit = function (e) {
 		])
 		{
 			settings[x] = settings[x]
-			.replace(/[,.]+/g, '.')
+			?.replace(/[,.]+/g, '.')
 			.replace(/\s+/g, '')
 			.toLowerCase()
 			.match(lineHeightMatchRegexp)
 			?.[0] || DEFAULT_LINEHEIGHT
-			const type = settings[x].match(/%|[a-z]+/)?.[0]
+			const type = settings[x]?.match(/%|[a-z]+/)?.[0]
 			if (
 				!type
 				&
@@ -1574,7 +1574,7 @@ setInterval(async () => {
 		? 'display: none;'
 		: ''
 	}
-	line-height: ${settings.LASTMSG_SOURCE_LINEHEIGHT.match(lineHeightMatchRegexp)?.[0] || DEFAULT_LINEHEIGHT};
+	line-height: ${settings.LASTMSG_SOURCE_LINEHEIGHT?.match(lineHeightMatchRegexp)?.[0] || DEFAULT_LINEHEIGHT};
 }
 .sugoi__result {
 	font-size: ${settings.LASTMSG_RESULT_FONTSIZE}px;
@@ -1583,7 +1583,7 @@ setInterval(async () => {
 		? 'padding-top: 10px;'
 		: ''
 	}
-	line-height: ${settings.LASTMSG_RESULT_LINEHEIGHT.match(lineHeightMatchRegexp)?.[0] || DEFAULT_LINEHEIGHT};
+	line-height: ${settings.LASTMSG_RESULT_LINEHEIGHT?.match(lineHeightMatchRegexp)?.[0] || DEFAULT_LINEHEIGHT};
 }
 .sugoi__log {
 	${
@@ -1594,11 +1594,11 @@ setInterval(async () => {
 }
 .sugoi__log__message__source {
 	font-size: ${settings.LOG_SOURCE_FONTSIZE}px;
-	line-height: ${settings.LOG_SOURCE_LINEHEIGHT.match(lineHeightMatchRegexp)?.[0] || DEFAULT_LINEHEIGHT};
+	line-height: ${settings.LOG_SOURCE_LINEHEIGHT?.match(lineHeightMatchRegexp)?.[0] || DEFAULT_LINEHEIGHT};
 }
 .sugoi__log__message__result {
 	font-size: ${settings.LOG_RESULT_FONTSIZE}px;
-	line-height: ${settings.LOG_RESULT_LINEHEIGHT.match(lineHeightMatchRegexp)?.[0] || DEFAULT_LINEHEIGHT};
+	line-height: ${settings.LOG_RESULT_LINEHEIGHT?.match(lineHeightMatchRegexp)?.[0] || DEFAULT_LINEHEIGHT};
 }
 ${
 	settings.LASTMSG_RESULT_FONTSIZE < 1
